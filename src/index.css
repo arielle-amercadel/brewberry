@@ -373,6 +373,8 @@ main:focus {
     font-size: 0.9375rem;
     font-weight: 700;
     line-height: 1.2;
+    /* Breaks long lines evenly instead of inside "purr-lease" or "Bear-y". */
+    text-wrap: balance;
   }
   .bubble-tail {
     position: absolute;

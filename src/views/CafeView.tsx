@@ -1,6 +1,9 @@
 import { Formula } from "../components/Formula";
-import { ingredients } from "../data/ingredients";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
+import { customerIds, customers, type CustomerId } from "../data/customers";
+import { ingredients } from "../data/ingredients";
+import type { Order } from "../data/orders";
+import { recipes } from "../data/recipes";
 
 const station = [
   ingredients.milk,
@@ -11,7 +14,33 @@ const station = [
   ingredients.honey,
 ];
 
-export function CafeView() {
+function CustomerSprite({
+  id,
+  className,
+}: {
+  id: CustomerId;
+  className: string;
+}) {
+  const customer = customers[id];
+  return (
+    <AnimatedSprite
+      frames={[customer.sprite, customer.blinkSprite]}
+      motion="blink"
+      alt={`${customer.name} the ${customer.species}`}
+      className={className}
+    />
+  );
+}
+
+export function CafeView({ order }: { order: Order }) {
+  const customer = customers[order.customerId];
+  const recipe = recipes[order.recipeId];
+  // The ordering customer takes the counter; the others fill the same three
+  // background spots, so an order from Mochi matches the original scene.
+  const [firstSeat, secondSeat, standing] = customerIds.filter(
+    (id) => id !== order.customerId,
+  );
+
   return (
     <div className="grid gap-2">
       <div className="relative">
@@ -36,11 +65,7 @@ export function CafeView() {
           <div className="tile-wainscot scene-wainscot" />
           <div className="scene-customers">
             <div className="seat">
-              <AnimatedSprite
-                frames={["cat", "cat-blink"]}
-                motion="blink"
-                className="seat-guest"
-              />
+              <CustomerSprite id={firstSeat} className="seat-guest" />
               <Sprite name="cafe-table" className="seat-table" />
               <span className="seat-drink">
                 <AnimatedSprite
@@ -52,30 +77,17 @@ export function CafeView() {
               </span>
             </div>
             <div className="seat hidden min-[480px]:block">
-              <AnimatedSprite
-                frames={["bear", "bear-blink"]}
-                motion="blink"
-                className="seat-guest anim-late"
-              />
+              <CustomerSprite id={secondSeat} className="seat-guest anim-late" />
               <Sprite name="cafe-table" className="seat-table" />
             </div>
             <div className="customer">
+              <CustomerSprite id={order.customerId} className="bob" />
               <div className="bubble panel panel-cream">
-                <p>Strawberry milk, please!</p>
+                <p>{customer.request(recipe.name)}</p>
                 <Sprite name="bubble-tail" className="bubble-tail" />
               </div>
-              <AnimatedSprite
-                frames={["mochi", "mochi-blink"]}
-                motion="blink"
-                alt="Mochi the bunny"
-                className="bob"
-              />
             </div>
-            <AnimatedSprite
-              frames={["frog", "frog-blink"]}
-              motion="blink"
-              className="anim-later self-end"
-            />
+            <CustomerSprite id={standing} className="anim-later self-end" />
           </div>
           <div className="scene-counter">
             <div className="tile-counter-top" />
@@ -91,10 +103,11 @@ export function CafeView() {
             <span className="preview-tag">Preview</span>
           </div>
           <div className="ticket-body">
-            <Sprite name="strawberry-milk" />
+            <Sprite name={recipe.sprite} />
             <div>
-              <p className="ticket-drink">Strawberry milk</p>
-              <Formula items={[ingredients.milk, ingredients.strawberry]} />
+              <p className="text-sm">For {customer.name}</p>
+              <p className="ticket-drink">{recipe.name}</p>
+              <Formula items={recipe.items} />
             </div>
           </div>
         </section>
