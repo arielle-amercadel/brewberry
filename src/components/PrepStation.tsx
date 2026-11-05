@@ -77,7 +77,7 @@ export function PrepStation({
 
   return (
     <section className="prep panel panel-wood" aria-labelledby="prep">
-      <h3 id="prep" className="pixel-heading">
+      <h3 id="prep" tabIndex={-1} className="pixel-heading">
         Prep station
       </h3>
       <div className="prep-layout">
@@ -177,7 +177,8 @@ export function PrepStation({
           {done && (
             <span className="sr-only">
               {" "}
-              {customer.name} says: {customer.thanks}
+              {customer.name} says: {customer.thanks} You now have{" "}
+              {game.coins} coins.
             </span>
           )}
         </p>

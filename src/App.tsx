@@ -61,13 +61,19 @@ export default function App() {
   // Only the active tab may change the game. Cleared before the lock is handed on.
   const writable = useRef(!usesLock);
 
-  /** Applies a change that opens a new screen, then takes the player to its top. */
-  const showScreen = (change: () => void) => {
+  /**
+   * Applies a change that opens a new screen, then takes the player to its top,
+   * or to the section `landOn` names.
+   */
+  const showScreen = (change: () => void, landOn?: string) => {
     // The new screen has to exist before focus can move into it.
     flushSync(change);
     document.documentElement.scrollTop = 0;
+    const section = landOn ? document.getElementById(landOn) : null;
     // Announces the new screen, and the next Tab press goes into it.
-    main.current?.querySelector("h2")?.focus({ preventScroll: true });
+    const heading = section ?? main.current?.querySelector("h2");
+    heading?.focus({ preventScroll: true });
+    section?.scrollIntoView?.({ block: "start" });
   };
 
   useEffect(() => {
@@ -174,7 +180,15 @@ export default function App() {
   };
 
   const navigate = (next: View) => {
-    if (next !== view) showScreen(() => setView(next));
+    if (next === view) return;
+    // Back from looking up a recipe mid-order: straight to the ingredients.
+    const backToBrewing =
+      view === "Recipe Book" &&
+      next === "Café" &&
+      game !== null &&
+      !game.dayComplete &&
+      game.feedback !== "correct";
+    showScreen(() => setView(next), backToBrewing ? "prep" : undefined);
   };
 
   const playHere = () => {

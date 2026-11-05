@@ -30,6 +30,8 @@ export function ShopView({
 }) {
   const [speech, setSpeech] = useState(GREETING);
   const [speechAbout, setSpeechAbout] = useState<DecorationId | null>(null);
+  // The new balance after a purchase. The header shows it; this says it aloud.
+  const [balance, setBalance] = useState<string | null>(null);
   const speechNote = speechAbout && hideNoteFrom[speechAbout];
   const guard = useRepeatGuard();
 
@@ -44,8 +46,10 @@ export function ShopView({
         guard.hold(event, id);
         dispatch({ type: "buy", decorationId: id });
         setSpeech(`Thanks! Enjoy your ${name}.`);
+        setBalance(`You have ${game.coins - decorations[id].price} coins left.`);
         return;
       }
+      setBalance(null);
       dispatch({ type: "toggleEquip", decorationId: id });
       setSpeech(
         game.equipped.includes(id)
@@ -73,6 +77,7 @@ export function ShopView({
               {speechNote && game.equipped.includes(speechAbout) && (
                 <span className={speechNote}> It shows on larger screens.</span>
               )}
+              {balance && <span className="sr-only"> {balance}</span>}
             </p>
             <Sprite name="bubble-tail" className="bubble-side-tail" />
           </div>
@@ -93,6 +98,7 @@ export function ShopView({
           const item = decorations[id];
           const status = purchaseStatus(game, id);
           const note = hideNoteFrom[id];
+          const shortNote = `need-${id}`;
           const action =
             status !== "owned"
               ? "Buy"
@@ -122,6 +128,7 @@ export function ShopView({
                     type="button"
                     aria-label={`${action} ${item.name}`}
                     disabled={status === "short"}
+                    aria-describedby={status === "short" ? shortNote : undefined}
                     className={`shelf-button panel ${status === "owned" ? "" : "shelf-button-buy"}`}
                     onClick={(event) => onItemButton(event, id)}
                     onKeyDown={guard.onKeyDown}
@@ -130,8 +137,8 @@ export function ShopView({
                   </button>
                 </div>
                 {status === "short" && (
-                  <p className="shelf-note">
-                    Need {item.price - game.coins} more
+                  <p id={shortNote} className="shelf-note">
+                    Need {item.price - game.coins} more coins
                   </p>
                 )}
                 {note && (

@@ -187,6 +187,58 @@ describe("finishing a day", () => {
   });
 });
 
+describe("decorations on Day Complete", () => {
+  const closedCafe = () => screen.getByRole("region", { name: "The café after closing" });
+  const shown = () =>
+    within(closedCafe())
+      .getAllByRole("img")
+      .map((img) => img.getAttribute("alt") ?? img.getAttribute("aria-label"))
+      .filter((name) => !name?.includes(" the "));
+  const save = (equipped: string[]) => {
+    const state = {
+      ...createCafeState({ customerId: "mochi", recipeId: "strawberry-milk" }),
+      servedToday: 5,
+      dayComplete: true,
+      feedback: "correct",
+      selected: ["milk", "strawberry"],
+      coins: 100,
+      owned: ["strawberry-planter", "sage-rug", "sunny-print", "cafe-lamp", "bunting", "cozy-cushion"],
+      equipped,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, revision: 1, state }));
+  };
+
+  test("every equipped decoration is in the closed café", () => {
+    save(["strawberry-planter", "sage-rug", "sunny-print", "cafe-lamp", "bunting", "cozy-cushion"]);
+    start();
+    expect(shown().sort()).toEqual(
+      ["Berry bunting", "Café lamp", "Cozy cushion", "Sage checkered rug", "Strawberry planter", "Sunny wall print"],
+    );
+  });
+
+  test("decorations put away in the Shop stay out of it", () => {
+    save(["bunting", "sage-rug"]);
+    start();
+    expect(shown().sort()).toEqual(["Berry bunting", "Sage checkered rug"]);
+  });
+
+  test("with nothing equipped, only the guests are there", () => {
+    save([]);
+    start();
+    expect(shown()).toEqual([]);
+    expect(within(closedCafe()).getAllByRole("img")).toHaveLength(4);
+  });
+
+  test("something bought and put out today shows when the day ends", async () => {
+    const user = start();
+    await user.click(button("Shop"));
+    await user.click(button("Buy Berry bunting"));
+    await user.click(button("Café"));
+    await reachDayComplete(user);
+    expect(shown()).toEqual(["Berry bunting"]);
+  });
+});
+
 describe("starting the next day", () => {
   test("advances the day, resets orders, and carries everything over", async () => {
     const user = start();
