@@ -2,9 +2,9 @@
 
 A cozy pixel-art café game for the browser. Take orders from four animal regulars, look up recipes, brew drinks, earn coins, and decorate your café, one relaxed in-game day at a time.
 
-![The Brewberry café: Biscuit the cat orders a hot chocolate while Mochi, Maple, and Matcha wait nearby](docs/screenshots/cafe.png)
+**Live demo:** [brewberry-bay.vercel.app](https://brewberry-bay.vercel.app)
 
-**Live demo:** coming soon.
+![The Brewberry café: Biscuit the cat orders a hot chocolate while Mochi, Maple, and Matcha wait nearby](docs/screenshots/cafe.png)
 
 Built with React, TypeScript, Vite, Tailwind CSS, and Vitest. All artwork is original pixel art, generated from editable text grids.
 
