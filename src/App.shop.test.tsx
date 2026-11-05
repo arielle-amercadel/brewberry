@@ -118,6 +118,25 @@ test("buying deducts the price, stamps Owned, and thanks the player", async () =
   expect(speech()).toBe("Thanks! Enjoy your Berry bunting.");
 });
 
+test("buying keeps the button in view after the message changes", async () => {
+  const user = start();
+  await go(user, "Shop");
+  const labels: (string | null)[] = [];
+  Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+    labels.push(this.getAttribute("aria-label"));
+  });
+  try {
+    await user.click(button("Buy Berry bunting"));
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+      block: "nearest",
+    });
+    // Only after the update, so it measures the button's new position.
+    expect(labels).toEqual(["Unequip Berry bunting"]);
+  } finally {
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  }
+});
+
 test("items players can't afford are disabled and say how much is missing", async () => {
   const user = start();
   await go(user, "Shop");

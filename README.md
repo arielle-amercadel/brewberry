@@ -161,13 +161,14 @@ The tests use Vitest, React Testing Library, user-event, and jsdom:
 - `src/App.orders.test.tsx` checks that every customer and drink displays correctly, and that the order stays the same while switching screens.
 - `src/App.brewing.test.tsx` plays through selecting, brewing, retrying, serving, the next customer, and switching screens.
 - `src/App.shop.test.tsx` plays through earning coins, buying, equipping, and keeping progress across screens.
+- `src/App.navigation.test.tsx` checks scroll and focus when switching screens, and repeated key presses on Brew and Buy.
 - `src/data/gameData.test.ts` checks the customers, the recipes, dialogue length, and order generation.
 - `src/data/cafeGame.test.ts` checks the game rules, rewards, purchases, equipping, recipe matching, and state restored from JSON.
 - `src/components/PrepStation.test.tsx` checks the prep station's buttons and states after restoring from JSON.
 
 The tests don't check how anything looks, so also review changes in a browser:
 
-- Try each tab, and check keyboard focus with the Tab key.
+- Try each tab, and check keyboard focus with the Tab key. Opening a screen should show its top and move focus to its heading.
 - Check phone and desktop widths. There should be no horizontal scrolling or console errors.
 - Turn on your system's reduced-motion setting and confirm the animations stop.
 - Play a few orders, including a wrong drink and a Recipe Book visit partway through.
@@ -188,6 +189,7 @@ src/
     fonts/              Pixelify Sans and its license
     sprites/            Generated PNGs and manifest.ts
   components/           Header, Navigation, PrepStation, Sprite, and Formula
+  hooks/                Repeated press guard
   data/                 Ingredients, recipes, customers, orders, decorations, rules, tests
   views/                Café, Shop, and Recipe Book screens
   App.tsx               Console frame, selected screen, and game state
@@ -196,6 +198,7 @@ src/
   App.orders.test.tsx   Order display and stability tests
   App.brewing.test.tsx  Gameplay tests
   App.shop.test.tsx     Coin, shop, and decoration tests
+  App.navigation.test.tsx  Screen switching and repeated key press tests
   index.css             Tailwind theme, pixel panels, layouts, and animations
   main.tsx              React entry point
 public/

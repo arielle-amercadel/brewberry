@@ -60,6 +60,16 @@ a:focus-visible,
 main:focus {
   outline: none;
 }
+/* Screen headings take focus when a tab opens them. Keyboard users see where it
+   went; mouse and touch players see no change. */
+h2[tabindex="-1"]:focus {
+  outline: none;
+}
+h2[tabindex="-1"]:focus-visible {
+  outline: 3px solid var(--color-cocoa);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-cream);
+}
 
 @layer components {
   /* Sprites */
