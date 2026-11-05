@@ -3,10 +3,14 @@ import {
   cafeReducer,
   createCafeState,
   matchesRecipe,
+  ORDER_REWARD,
+  purchaseStatus,
+  STARTING_COINS,
   SLOT_COUNT,
   type CafeAction,
   type CafeState,
 } from "./cafeGame";
+import { decorationIds, decorations, type DecorationId } from "./decorations";
 import { ingredientIds, type IngredientId } from "./ingredients";
 import type { Order } from "./orders";
 import { recipeIds, recipes } from "./recipes";
@@ -143,6 +147,7 @@ describe("completing an order", () => {
 
   test("next starts a clean order and counts up", () => {
     expect(cafeReducer(served, { type: "next", order: nextOrder })).toEqual({
+      ...served,
       order: nextOrder,
       orderNumber: 2,
       selected: [],
@@ -207,5 +212,201 @@ describe("after a JSON round trip", () => {
     expect(
       cafeReducer(restored, { type: "next", order: nextOrder }).orderNumber,
     ).toBe(2);
+  });
+});
+
+const buy = (decorationId: DecorationId): CafeAction => ({
+  type: "buy",
+  decorationId,
+});
+const toggleEquip = (decorationId: DecorationId): CafeAction => ({
+  type: "toggleEquip",
+  decorationId,
+});
+const withCoins = (coins: number): CafeState => ({
+  ...createCafeState(order),
+  coins,
+});
+const serve: CafeAction[] = [toggle(milk), toggle(strawberry), brew];
+
+describe("earning coins", () => {
+  test("players start with 30 coins and nothing owned", () => {
+    const state = createCafeState(order);
+    expect(state.coins).toBe(30);
+    expect(STARTING_COINS).toBe(30);
+    expect(state.owned).toEqual([]);
+    expect(state.equipped).toEqual([]);
+  });
+
+  test("a correct drink pays exactly 10", () => {
+    expect(ORDER_REWARD).toBe(10);
+    expect(run(serve).coins).toBe(40);
+  });
+
+  test("brewing a finished order again pays nothing more", () => {
+    let state = run(serve);
+    for (let i = 0; i < 10; i++) state = cafeReducer(state, brew);
+    expect(state.coins).toBe(40);
+  });
+
+  test("wrong and incomplete attempts never change coins", () => {
+    let state = run([toggle(milk), brew]);
+    expect(state.coins).toBe(30);
+    state = run([toggle(coffee), brew], state);
+    expect(state.feedback).toBe("wrong");
+    for (let i = 0; i < 20; i++) state = cafeReducer(state, brew);
+    expect(state.coins).toBe(30);
+  });
+
+  test("a few wrong tries still pay 10 once the drink is right", () => {
+    const state = run([
+      toggle(milk),
+      toggle(coffee),
+      brew,
+      brew,
+      toggle(coffee),
+      toggle(strawberry),
+      brew,
+    ]);
+    expect(state.coins).toBe(40);
+  });
+
+  test("moving on neither pays nor loses coins", () => {
+    const state = cafeReducer(run(serve), { type: "next", order: nextOrder });
+    expect(state.coins).toBe(40);
+  });
+
+  test("every order pays once", () => {
+    let state = createCafeState(order);
+    for (let i = 0; i < 5; i++) {
+      state = run(serve, state);
+      state = cafeReducer(state, { type: "next", order });
+    }
+    expect(state.coins).toBe(80);
+    expect(state.orderNumber).toBe(6);
+  });
+
+  test("the reducer gives the same result when run twice, as StrictMode does", () => {
+    const ready = run([toggle(milk), toggle(strawberry)]);
+    expect(cafeReducer(ready, brew)).toEqual(cafeReducer(ready, brew));
+    expect(ready.coins).toBe(30);
+  });
+});
+
+describe("buying decorations", () => {
+  test.each(decorationIds)("%s costs its listed price", (id) => {
+    const { price } = decorations[id];
+    expect(cafeReducer(withCoins(100), buy(id)).coins).toBe(100 - price);
+  });
+
+  test("buying adds to owned and equips automatically", () => {
+    const state = run([buy("bunting")]);
+    expect(state.owned).toEqual(["bunting"]);
+    expect(state.equipped).toEqual(["bunting"]);
+  });
+
+  test("exactly enough coins can buy, leaving zero", () => {
+    const state = cafeReducer(withCoins(30), buy("sage-rug"));
+    expect(state.coins).toBe(0);
+    expect(state.owned).toEqual(["sage-rug"]);
+  });
+
+  test("one coin short is refused and changes nothing", () => {
+    const start = withCoins(29);
+    expect(purchaseStatus(start, "sage-rug")).toBe("short");
+    expect(cafeReducer(start, buy("sage-rug"))).toBe(start);
+  });
+
+  test("the starting balance can't afford the lamp", () => {
+    const start = createCafeState(order);
+    expect(cafeReducer(start, buy("cafe-lamp"))).toBe(start);
+  });
+
+  test("a second purchase changes nothing, even with coins to spare", () => {
+    const owned = cafeReducer(withCoins(100), buy("bunting"));
+    expect(purchaseStatus(owned, "bunting")).toBe("owned");
+    expect(cafeReducer(owned, buy("bunting"))).toBe(owned);
+  });
+
+  test("an owned item that was put away can't be bought again", () => {
+    const stored = run([buy("bunting"), toggleEquip("bunting")]);
+    expect(cafeReducer(stored, buy("bunting"))).toBe(stored);
+  });
+
+  test("buying everything costs 150 and coins never go negative", () => {
+    let state = withCoins(150);
+    for (const id of decorationIds) state = cafeReducer(state, buy(id));
+    expect(state.coins).toBe(0);
+    expect(state.owned).toEqual(decorationIds);
+    expect(state.equipped).toEqual(decorationIds);
+  });
+
+  test("shopping leaves the current drink alone, and works after serving", () => {
+    const making = run([toggle(milk), buy("bunting")]);
+    expect(making.selected).toEqual([milk]);
+    expect(making.order).toEqual(order);
+    const served = run([...serve, buy("bunting")]);
+    expect(served.feedback).toBe("correct");
+    expect(served.coins).toBe(25);
+  });
+});
+
+describe("equipping decorations", () => {
+  const owned = run([buy("bunting")]);
+
+  test("toggling puts an item away and back out", () => {
+    const stored = cafeReducer(owned, toggleEquip("bunting"));
+    expect(stored.equipped).toEqual([]);
+    expect(stored.owned).toEqual(["bunting"]);
+    const back = cafeReducer(stored, toggleEquip("bunting"));
+    expect(back.equipped).toEqual(["bunting"]);
+  });
+
+  test("equipping is free", () => {
+    expect(cafeReducer(owned, toggleEquip("bunting")).coins).toBe(owned.coins);
+  });
+
+  test("an unowned item can't be equipped", () => {
+    expect(cafeReducer(owned, toggleEquip("sage-rug"))).toBe(owned);
+  });
+
+  test("all six can be out at once", () => {
+    let state = withCoins(150);
+    for (const id of decorationIds) state = cafeReducer(state, buy(id));
+    expect(state.equipped).toHaveLength(6);
+  });
+
+  test("decorations stay equipped through later orders", () => {
+    const later = cafeReducer(run(serve, owned), {
+      type: "next",
+      order: nextOrder,
+    });
+    expect(later.owned).toEqual(["bunting"]);
+    expect(later.equipped).toEqual(["bunting"]);
+  });
+});
+
+describe("the economy after a JSON round trip", () => {
+  const restore = (state: CafeState): CafeState =>
+    JSON.parse(JSON.stringify(state));
+
+  test("coins, owned, and equipped come back unchanged", () => {
+    const state = run([buy("bunting"), ...serve]);
+    expect(restore(state)).toEqual(state);
+  });
+
+  test("a restored item still can't be bought twice", () => {
+    const restored = restore(run([buy("bunting")]));
+    expect(cafeReducer(restored, buy("bunting"))).toBe(restored);
+  });
+
+  test("a restored item can still be unequipped", () => {
+    const restored = restore(run([buy("bunting")]));
+    expect(cafeReducer(restored, toggleEquip("bunting")).equipped).toEqual([]);
+  });
+
+  test("a restored finished order doesn't pay again", () => {
+    const restored = restore(run(serve));
+    expect(cafeReducer(restored, brew).coins).toBe(40);
   });
 });

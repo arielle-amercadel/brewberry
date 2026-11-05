@@ -1,6 +1,7 @@
 import { useRef, type Dispatch, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import {
+  ORDER_REWARD,
   SLOT_COUNT,
   type CafeAction,
   type CafeState,
@@ -26,7 +27,7 @@ function statusMessage({ order, feedback }: CafeState): string {
     case "wrong":
       return `Hmm, that's not quite ${drink}. Check the Recipe Book and try again!`;
     case "correct":
-      return `${drink} is ready!`;
+      return `${drink} is ready! +${ORDER_REWARD} coins`;
     case null:
       return `${customer.name} would like ${drink}. Check the Recipe Book for ingredients.`;
   }

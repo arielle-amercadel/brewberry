@@ -155,6 +155,7 @@ describe("completing an order", () => {
     expect(screen.getByRole("status").textContent).toContain(
       "Maple says: Bear-y tasty!",
     );
+    expect(message()).toContain("+10 coins");
   });
 
   test("locks the mat until the player continues", async () => {

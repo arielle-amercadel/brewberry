@@ -16,10 +16,10 @@ export default function App() {
   return (
     <div className="console panel panel-berry">
       <div className="screen">
-        <Header />
+        <Header coins={game.coins} />
         <main id="main-content" tabIndex={-1} className="screen-main">
           {view === "Café" && <CafeView game={game} dispatch={dispatch} />}
-          {view === "Shop" && <ShopView />}
+          {view === "Shop" && <ShopView game={game} dispatch={dispatch} />}
           {view === "Recipe Book" && <RecipeBookView />}
         </main>
         <Navigation view={view} onNavigate={setView} />

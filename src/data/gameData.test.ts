@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { sprites } from "../assets/sprites/manifest";
 import { customerIds, customers } from "./customers";
+import { decorationIds, decorations } from "./decorations";
 import { ingredientIds, ingredients } from "./ingredients";
 import { createNextOrder, createOrder } from "./orders";
 import { recipeIds, recipes } from "./recipes";
@@ -82,6 +83,27 @@ describe("recipes", () => {
       for (const item of recipes[id].items) {
         expect(ingredientIds).toContain(item);
       }
+    }
+  });
+});
+
+describe("decorations", () => {
+  test("are the six shop items at their prices", () => {
+    expect(
+      decorationIds.map((id) => [decorations[id].name, decorations[id].price]),
+    ).toEqual([
+      ["Strawberry planter", 20],
+      ["Sage checkered rug", 30],
+      ["Sunny wall print", 25],
+      ["Café lamp", 40],
+      ["Berry bunting", 15],
+      ["Cozy cushion", 20],
+    ]);
+  });
+
+  test("use sprites that exist", () => {
+    for (const id of decorationIds) {
+      expect(sprites[decorations[id].sprite]).toBeTruthy();
     }
   });
 });

@@ -294,13 +294,29 @@ main:focus {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: calc(6 * var(--px));
+    gap: calc(2 * var(--px));
     padding-inline: calc(6 * var(--px));
   }
   @media (max-width: 639px) {
     .scene-wall {
       justify-content: center;
+      gap: calc(3 * var(--px));
+      padding-inline: calc(2 * var(--px));
     }
+  }
+  .scene-bunting {
+    position: absolute;
+    inset: calc(13 * var(--px)) 0 auto;
+    height: calc(8 * var(--px));
+    background: url("./assets/sprites/bunting.png") 0 0 repeat-x;
+    background-size: calc(32 * var(--px)) auto;
+  }
+  /* A runner hanging down the middle of the counter. */
+  .scene-rug {
+    position: absolute;
+    bottom: 0;
+    left: calc(50% - 16 * var(--px));
+    z-index: 4;
   }
   .wall-shelf {
     margin-top: calc(10 * var(--px));
@@ -651,6 +667,32 @@ main:focus {
     gap: 3px;
     font-size: 1rem;
   }
+  .shelf-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px 4px;
+  }
+  .shelf-button {
+    min-height: 44px;
+    border-image-source: url("./assets/sprites/panel-cream.png");
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    line-height: 1.1;
+    cursor: pointer;
+  }
+  .shelf-button-buy {
+    border-image-source: url("./assets/sprites/panel-berry.png");
+  }
+  .shelf-button:disabled {
+    border-image-source: url("./assets/sprites/panel-off.png");
+    cursor: not-allowed;
+  }
+  .shelf-note {
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
   .stamp {
     padding: 0 5px;
     box-shadow: inset 0 0 0 2px var(--color-deep-berry);
@@ -768,7 +810,8 @@ main:focus {
   .bob {
     animation: bob 1.6s steps(1) infinite;
   }
-  .tab:active {
+  .tab:active,
+  .shelf-button:enabled:active {
     transform: translateY(var(--px));
   }
   @media (hover: hover) {
