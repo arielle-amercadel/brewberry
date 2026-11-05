@@ -1,0 +1,15 @@
+{
+  ".": { "name": "transparent", "hex": null },
+  "K": { "name": "dark cocoa (outline)", "hex": "#2f1a16" },
+  "C": { "name": "chocolate", "hex": "#5a3428" },
+  "A": { "name": "caramel", "hex": "#c98a5a" },
+  "S": { "name": "strawberry", "hex": "#e8637f" },
+  "D": { "name": "deep berry (strawberry shadow)", "hex": "#b83f5c" },
+  "P": { "name": "pink", "hex": "#f7a8b8" },
+  "B": { "name": "blush", "hex": "#fde0e0" },
+  "W": { "name": "cream", "hex": "#fff5df" },
+  "T": { "name": "cream shadow", "hex": "#ead6b8" },
+  "G": { "name": "sage", "hex": "#a9c48f" },
+  "E": { "name": "deep sage", "hex": "#6f9465" },
+  "H": { "name": "honey", "hex": "#f4c95d" }
+}

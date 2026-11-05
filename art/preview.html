@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brewberry sprite preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #fff5df;
+        color: #2f1a16;
+        font:
+          14px/1.4 "Trebuchet MS",
+          Verdana,
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 20px;
+      }
+      h2 {
+        margin: 24px 0 8px;
+        font-size: 15px;
+      }
+      p {
+        margin: 0;
+      }
+      label {
+        font-weight: bold;
+      }
+      img {
+        display: block;
+        image-rendering: pixelated;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 16px;
+        padding: 16px;
+        border: 3px solid #2f1a16;
+      }
+      figure {
+        margin: 0;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Brewberry sprite preview</h1>
+    <p>
+      Desktop game size is 3×, phone is 2×. Edit a grid in art/sprites, run
+      npm run sprites, then refresh.
+    </p>
+    <p>
+      <label for="scale">Scale</label>
+      <select id="scale">
+        <option value="1">1×</option>
+        <option value="2">2× (phone)</option>
+        <option value="3" selected>3× (desktop)</option>
+        <option value="6">6× (inspection)</option>
+      </select>
+      <label for="background">Background</label>
+      <select id="background">
+        <option value="#fff5df">Cream</option>
+        <option value="#fde0e0">Blush</option>
+        <option value="#a9c48f">Sage</option>
+        <option value="#c98a5a">Caramel</option>
+      </select>
+    </p>
+    <div id="groups"></div>
+
+    <script>
+      const groups = {
+        Characters: [
+          "mochi", "mochi-blink", "cat", "cat-blink", "bear", "bear-blink",
+          "frog", "frog-blink", "hedgehog", "hedgehog-blink",
+        ],
+        Drinks: [
+          "strawberry-milk", "honey-tea", "cafe-latte", "hot-chocolate",
+          "berry-tea", "empty-mug", "mini-mug", "steam-1", "steam-2",
+        ],
+        Ingredients: ["milk", "strawberry", "tea", "coffee", "cocoa", "honey"],
+        Decorations: [
+          "potted-plant", "strawberry-planter", "sage-rug", "sunny-print",
+          "cafe-lamp", "bunting", "cozy-cushion",
+        ],
+        Scene: ["window", "wall-shelf", "cafe-table", "crate", "slot", "till"],
+        Interface: [
+          "logo", "coin", "pip", "sparkle", "bubble-tail", "tab-cafe",
+          "tab-shop", "tab-book",
+        ],
+        "Panels and tiles": [
+          "panel-cream", "panel-paper", "panel-wood", "panel-pink",
+          "panel-berry", "panel-off", "tile-page", "tile-wall",
+          "tile-wainscot", "tile-counter-top", "tile-counter-front",
+          "tile-awning", "tile-shelf", "tile-shop-wall",
+        ],
+      };
+      const root = document.getElementById("groups");
+      const scale = document.getElementById("scale");
+      const background = document.getElementById("background");
+      const images = [];
+      const resize = (img) => {
+        img.width = img.naturalWidth * Number(scale.value);
+        img.height = img.naturalHeight * Number(scale.value);
+      };
+      for (const [title, names] of Object.entries(groups)) {
+        const heading = document.createElement("h2");
+        heading.textContent = title;
+        const row = document.createElement("div");
+        row.className = "row";
+        for (const name of names) {
+          const figure = document.createElement("figure");
+          const img = new Image();
+          img.alt = name;
+          img.onload = () => resize(img);
+          img.src = `../src/assets/sprites/${name}.png`;
+          images.push(img);
+          const caption = document.createElement("figcaption");
+          caption.textContent = name;
+          figure.append(img, caption);
+          row.append(figure);
+        }
+        root.append(heading, row);
+      }
+      scale.onchange = () => images.forEach(resize);
+      background.onchange = () => {
+        document.querySelectorAll(".row").forEach((row) => {
+          row.style.background = background.value;
+        });
+      };
+    </script>
+  </body>
+</html>
