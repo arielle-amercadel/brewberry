@@ -1,0 +1,820 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("./assets/fonts/pixelify-sans-latin-600-normal.woff2")
+    format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@theme {
+  --color-cocoa: #2f1a16;
+  --color-chocolate: #5a3428;
+  --color-caramel: #c98a5a;
+  --color-strawberry: #e8637f;
+  --color-deep-berry: #b83f5c;
+  --color-pink: #f7a8b8;
+  --color-blush: #fde0e0;
+  --color-cream: #fff5df;
+  --color-cream-shadow: #ead6b8;
+  --color-sage: #a9c48f;
+  --color-deep-sage: #6f9465;
+  --color-honey: #f4c95d;
+  --font-sans: "Trebuchet MS", Verdana, sans-serif;
+  --font-pixel: "Pixelify Sans", "Trebuchet MS", monospace;
+}
+
+:root {
+  /* One art pixel on screen. Sprites only ever scale by whole numbers. */
+  --px: 2px;
+  --scene-rows: 148;
+  font-family: var(--font-sans);
+  color: var(--color-cocoa);
+  background: var(--color-sage) url("./assets/sprites/tile-page.png") 0 0 /
+    calc(16 * var(--px));
+  font-synthesis: none;
+  image-rendering: pixelated;
+}
+@media (min-width: 640px) {
+  :root {
+    --px: 3px;
+    --scene-rows: 124;
+  }
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 3px solid var(--color-cocoa);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-cream);
+}
+main:focus {
+  outline: none;
+}
+
+@layer components {
+  /* Sprites */
+  .sprite {
+    display: block;
+    flex-shrink: 0;
+    width: calc(var(--sprite-w) * var(--px));
+    height: calc(var(--sprite-h) * var(--px));
+    max-width: none;
+    user-select: none;
+  }
+  .anim {
+    position: relative;
+    display: block;
+    width: fit-content;
+    flex-shrink: 0;
+  }
+  .anim > :last-child {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+  }
+
+  /* 9-slice pixel panels: every frame is a PNG, scaled by --px */
+  .panel {
+    border-style: solid;
+    border-color: transparent;
+    border-width: calc(4 * var(--px));
+    border-image-slice: 4 fill;
+    border-image-repeat: repeat;
+  }
+  .panel-cream {
+    border-image-source: url("./assets/sprites/panel-cream.png");
+  }
+  .panel-paper {
+    border-image-source: url("./assets/sprites/panel-paper.png");
+  }
+  .panel-wood {
+    border-image-source: url("./assets/sprites/panel-wood.png");
+  }
+  .panel-pink {
+    border-image-source: url("./assets/sprites/panel-pink.png");
+  }
+  .panel-berry {
+    border-image-source: url("./assets/sprites/panel-berry.png");
+  }
+
+  /* Repeating tiles */
+  .tile-awning,
+  .tile-wainscot,
+  .tile-counter-top,
+  .tile-counter-front,
+  .tile-shelf {
+    background-repeat: repeat-x;
+    background-size: calc(16 * var(--px)) auto;
+  }
+  .tile-awning {
+    background-image: url("./assets/sprites/tile-awning.png");
+  }
+  .tile-wainscot {
+    background-image: url("./assets/sprites/tile-wainscot.png");
+  }
+  .tile-counter-top {
+    height: calc(8 * var(--px));
+    background-image: url("./assets/sprites/tile-counter-top.png");
+  }
+  .tile-counter-front {
+    height: calc(16 * var(--px));
+    background-image: url("./assets/sprites/tile-counter-front.png");
+  }
+  .tile-shelf {
+    background-image: url("./assets/sprites/tile-shelf.png");
+  }
+
+  /* Text */
+  .pixel-heading {
+    font-family: var(--font-pixel);
+    font-size: 1.375rem;
+    line-height: 1.1;
+  }
+  .preview-tag {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    background: var(--color-cocoa);
+    color: var(--color-cream);
+    font-family: var(--font-pixel);
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+  }
+  .sign-text {
+    font-family: var(--font-pixel);
+    font-size: clamp(1.25rem, 3.4vw, 1.875rem);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  /* Handheld console */
+  .console {
+    width: 100%;
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+  .screen {
+    display: flex;
+    flex-direction: column;
+    gap: calc(3 * var(--px));
+    padding: calc(2 * var(--px));
+    background: var(--color-chocolate);
+  }
+  .console-footer {
+    padding-top: var(--px);
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+  }
+  .brand-title {
+    font-family: var(--font-pixel);
+    font-size: 1.875rem;
+    line-height: 1;
+  }
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 26px;
+    padding: 2px 8px;
+    background: var(--color-cream);
+    box-shadow:
+      0 -2px 0 var(--color-cocoa),
+      0 2px 0 var(--color-cocoa),
+      -2px 0 0 var(--color-cocoa),
+      2px 0 0 var(--color-cocoa);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .stat strong {
+    font-size: 1rem;
+  }
+
+  /* Tabs */
+  .tabs {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: calc(2 * var(--px));
+    padding-block: var(--px);
+    background: var(--color-chocolate);
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    cursor: pointer;
+    font-family: var(--font-pixel);
+    font-size: 1.125rem;
+    line-height: 1.1;
+    border-image-source: url("./assets/sprites/panel-cream.png");
+  }
+  .tab:hover {
+    border-image-source: url("./assets/sprites/panel-pink.png");
+  }
+  .tab[aria-current] {
+    border-image-source: url("./assets/sprites/panel-berry.png");
+  }
+  @media (min-width: 640px) {
+    .tab {
+      flex-direction: row;
+      gap: 8px;
+      font-size: 1.375rem;
+    }
+  }
+
+  /* Shared scene pieces */
+  .scene-awning {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+    height: calc(16 * var(--px));
+  }
+  .scene-counter {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 3;
+  }
+  .hanging-sign {
+    position: relative;
+    width: fit-content;
+    padding-top: calc(5 * var(--px));
+  }
+  .hanging-sign::before,
+  .hanging-sign::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: calc(2 * var(--px));
+    height: calc(6 * var(--px));
+    background: var(--color-cocoa);
+  }
+  .hanging-sign::before {
+    left: calc(10 * var(--px));
+  }
+  .hanging-sign::after {
+    right: calc(10 * var(--px));
+  }
+
+  /* Café scene */
+  .scene {
+    position: relative;
+    overflow: hidden;
+    height: calc(var(--scene-rows) * var(--px));
+    background: url("./assets/sprites/tile-wall.png") 0 0 / calc(16 * var(--px));
+    box-shadow: 0 0 0 var(--px) var(--color-cocoa);
+  }
+  .scene-wall {
+    position: absolute;
+    inset: calc(15 * var(--px)) 0 auto;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: calc(6 * var(--px));
+    padding-inline: calc(6 * var(--px));
+  }
+  @media (max-width: 639px) {
+    .scene-wall {
+      justify-content: center;
+    }
+  }
+  .wall-shelf {
+    margin-top: calc(10 * var(--px));
+  }
+  .wall-shelf-items {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: calc(-1 * var(--px));
+  }
+  .scene-wall > .hanging-sign {
+    z-index: 2;
+  }
+  .scene-wall > .sprite {
+    margin-top: calc(3 * var(--px));
+  }
+  .scene-wainscot {
+    position: absolute;
+    inset: auto 0 calc(24 * var(--px));
+    height: calc(16 * var(--px));
+  }
+  .scene-customers {
+    position: absolute;
+    inset: auto 0 calc(23 * var(--px));
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    padding-inline: calc(2 * var(--px));
+  }
+  .seat {
+    position: relative;
+    width: calc(42 * var(--px));
+    height: calc(48 * var(--px));
+    margin-bottom: calc(-9 * var(--px));
+    flex-shrink: 0;
+  }
+  .seat-guest {
+    position: absolute;
+    left: 0;
+    bottom: calc(16 * var(--px));
+  }
+  .seat-table {
+    position: absolute;
+    left: calc(8 * var(--px));
+    bottom: 0;
+  }
+  .seat-drink {
+    position: absolute;
+    left: calc(27 * var(--px));
+    bottom: calc(24 * var(--px));
+  }
+  .seat-steam {
+    position: absolute;
+    bottom: calc(14 * var(--px));
+  }
+  .customer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bubble {
+    position: absolute;
+    bottom: calc(100% + 9 * var(--px));
+    left: 50%;
+    z-index: 4;
+    width: max-content;
+    max-width: 11.5rem;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .bubble-tail {
+    position: absolute;
+    top: calc(100% + 3 * var(--px));
+    left: 50%;
+    margin-left: calc(-4 * var(--px));
+  }
+
+  /* Order ticket */
+  .ticket {
+    margin-top: calc(2 * var(--px));
+  }
+  .ticket-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .ticket-drink {
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  @media (min-width: 1024px) {
+    .scene-wall,
+    .scene-customers {
+      right: calc(76 * var(--px));
+    }
+    .ticket {
+      position: absolute;
+      top: calc(18 * var(--px));
+      right: calc(4 * var(--px));
+      z-index: 5;
+      width: calc(72 * var(--px));
+      margin: 0;
+    }
+    .ticket-body {
+      flex-direction: column;
+    }
+    .ticket-body > div {
+      text-align: center;
+    }
+    .ticket .formula-icons {
+      justify-content: center;
+    }
+  }
+
+  /* Recipe formula */
+  .formula {
+    display: grid;
+    gap: 2px;
+  }
+  .formula-icons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .formula-plus {
+    font-family: var(--font-pixel);
+    font-size: 1.125rem;
+    line-height: 1;
+  }
+  .formula-names {
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+
+  /* Prep station */
+  .prep-layout {
+    display: grid;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .crates {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 4px;
+  }
+  .crate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .crate-stack {
+    position: relative;
+    display: block;
+    width: calc(24 * var(--px));
+    height: calc(27 * var(--px));
+  }
+  .crate-item {
+    position: absolute;
+    top: 0;
+    left: calc(4 * var(--px));
+  }
+  .crate-box {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+  .brew {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .brew-mat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .brew-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    border-image-source: url("./assets/sprites/panel-off.png");
+    font-family: var(--font-pixel);
+    font-size: 1.25rem;
+    cursor: not-allowed;
+  }
+  .brew-soon {
+    font-size: 0.875rem;
+  }
+  @media (min-width: 640px) {
+    .crates {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  @media (min-width: 1024px) {
+    .prep-layout {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+  }
+
+  /* Shop */
+  .shop {
+    position: relative;
+    overflow: hidden;
+    background: url("./assets/sprites/tile-shop-wall.png") 0 0 /
+      calc(16 * var(--px));
+    box-shadow: 0 0 0 var(--px) var(--color-cocoa);
+  }
+  .shop-hero {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 4px calc(6 * var(--px));
+    padding: calc(15 * var(--px)) calc(4 * var(--px)) calc(23 * var(--px));
+  }
+  .shop-hero > .hanging-sign {
+    align-self: flex-start;
+    z-index: 3;
+  }
+  .keeper {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: flex-end;
+    gap: 2px;
+    margin-inline: auto 0;
+  }
+  .bubble-side {
+    position: relative;
+    max-width: 10.5rem;
+    margin-right: calc(6 * var(--px));
+    margin-bottom: calc(14 * var(--px));
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .bubble-side-tail {
+    position: absolute;
+    right: calc(-11 * var(--px));
+    bottom: 0;
+    transform: rotate(-90deg);
+  }
+  .shelves {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-bottom: calc(4 * var(--px));
+  }
+  .shelf-item {
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(3 * var(--px));
+  }
+  .shelf-art {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: calc(33 * var(--px));
+  }
+  .shelf-sparkle {
+    position: absolute;
+    top: calc(4 * var(--px));
+    left: calc(50% + 10 * var(--px));
+    visibility: hidden;
+  }
+  .shelf-item:hover .shelf-sparkle {
+    visibility: visible;
+  }
+  .shelf-plank {
+    height: calc(8 * var(--px));
+    margin-top: calc(-1 * var(--px));
+  }
+  .shelf-tag {
+    display: grid;
+    gap: 2px;
+    margin: calc(-1 * var(--px)) calc(3 * var(--px)) 0;
+  }
+  .shelf-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .price {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 1rem;
+  }
+  .stamp {
+    padding: 0 5px;
+    box-shadow: inset 0 0 0 2px var(--color-deep-berry);
+    color: var(--color-deep-berry);
+    font-family: var(--font-pixel);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    transform: rotate(-5deg);
+  }
+  @media (min-width: 768px) {
+    .shelves {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .bubble-side {
+      max-width: 15rem;
+    }
+  }
+
+  /* Recipe book */
+  .book-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .recipes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .recipe-slot {
+    display: flex;
+    width: calc(50% - 4px);
+  }
+  .recipe-card {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .recipe-number {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .recipe-art {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    padding: calc(2 * var(--px));
+    box-shadow: inset 0 0 0 2px var(--color-cocoa);
+  }
+  .recipe-art::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 -40%;
+    width: 30%;
+    background: var(--color-cream);
+    opacity: 0;
+    transform: skewX(-20deg);
+  }
+  .recipe-name {
+    font-family: var(--font-pixel);
+    font-size: 1.125rem;
+    line-height: 1.1;
+  }
+  @media (min-width: 640px) {
+    .recipe-slot {
+      width: calc(33.333% - 6px);
+    }
+  }
+  @media (min-width: 1024px) {
+    .recipe-slot {
+      width: calc(20% - 7px);
+    }
+  }
+
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 8px;
+    z-index: 30;
+    padding: 8px 12px;
+    background: var(--color-cream);
+    font-weight: 700;
+  }
+  .skip-link:focus {
+    top: 8px;
+  }
+}
+
+/* All movement lives here, so reduced-motion players get still scenes. */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-blink > :last-child {
+    animation: blink 5s steps(1) infinite;
+  }
+  .anim-late > :last-child {
+    animation-delay: -1.7s;
+  }
+  .anim-later > :last-child {
+    animation-delay: -3.1s;
+  }
+  .anim-steam > :first-child {
+    animation: frame-a 1.2s steps(1) infinite;
+  }
+  .anim-steam > :last-child {
+    animation: frame-b 1.2s steps(1) infinite;
+  }
+  .bob {
+    animation: bob 1.6s steps(1) infinite;
+  }
+  .tab:active {
+    transform: translateY(var(--px));
+  }
+  .crate:hover .crate-item {
+    animation: wiggle 0.5s steps(1) infinite;
+  }
+  .shelf-item:hover .shelf-sprite {
+    animation: hop 0.6s steps(1) infinite;
+  }
+  .shelf-item:hover .shelf-sparkle {
+    animation: twinkle 0.6s steps(1) infinite;
+  }
+  .recipe-card:hover,
+  .recipe-card:focus-visible {
+    transform: translateY(calc(-1 * var(--px))) rotate(-1.5deg);
+  }
+  .recipe-card:hover .recipe-art::after,
+  .recipe-card:focus-visible .recipe-art::after {
+    animation: shine 0.8s steps(6) 1;
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    visibility: hidden;
+  }
+  94% {
+    visibility: visible;
+  }
+  97% {
+    visibility: hidden;
+  }
+}
+@keyframes frame-a {
+  0%,
+  100% {
+    visibility: visible;
+  }
+  50% {
+    visibility: hidden;
+  }
+}
+@keyframes frame-b {
+  0%,
+  100% {
+    visibility: hidden;
+  }
+  50% {
+    visibility: visible;
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(var(--px));
+  }
+}
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(calc(-1 * var(--px)), calc(-1 * var(--px)));
+  }
+  75% {
+    transform: translate(var(--px), calc(-1 * var(--px)));
+  }
+}
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(-2 * var(--px)));
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes shine {
+  0% {
+    left: -40%;
+    opacity: 0.7;
+  }
+  100% {
+    left: 110%;
+    opacity: 0.7;
+  }
+}
