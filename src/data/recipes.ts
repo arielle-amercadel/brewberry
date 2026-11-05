@@ -1,12 +1,12 @@
 import type { SpriteName } from "../assets/sprites/manifest";
-import { ingredients, type Ingredient } from "./ingredients";
+import type { IngredientId } from "./ingredients";
 
 export type Recipe = {
   name: string;
   sprite: SpriteName;
   /** Background colour of the drink's illustration in the Recipe Book. */
   tint: string;
-  items: Ingredient[];
+  items: IngredientId[];
 };
 
 export const recipes = {
@@ -14,31 +14,31 @@ export const recipes = {
     name: "Strawberry milk",
     sprite: "strawberry-milk",
     tint: "var(--color-blush)",
-    items: [ingredients.milk, ingredients.strawberry],
+    items: ["milk", "strawberry"],
   },
   "honey-tea": {
     name: "Honey tea",
     sprite: "honey-tea",
     tint: "var(--color-sage)",
-    items: [ingredients.tea, ingredients.honey],
+    items: ["tea", "honey"],
   },
   "cafe-latte": {
     name: "Café latte",
     sprite: "cafe-latte",
     tint: "var(--color-honey)",
-    items: [ingredients.coffee, ingredients.milk],
+    items: ["coffee", "milk"],
   },
   "hot-chocolate": {
     name: "Hot chocolate",
     sprite: "hot-chocolate",
     tint: "var(--color-cream-shadow)",
-    items: [ingredients.milk, ingredients.cocoa],
+    items: ["milk", "cocoa"],
   },
   "berry-tea": {
     name: "Berry tea",
     sprite: "berry-tea",
     tint: "var(--color-pink)",
-    items: [ingredients.tea, ingredients.strawberry],
+    items: ["tea", "strawberry"],
   },
 } satisfies Record<string, Recipe>;
 

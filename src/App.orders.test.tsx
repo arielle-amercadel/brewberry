@@ -58,11 +58,7 @@ test.each(recipeIds.map((id, i) => [id, i] as const))(
     const recipe = recipes[id];
 
     expect(within(ticket()).getByText(recipe.name)).toBeTruthy();
-    expect(
-      within(ticket()).getByText(
-        recipe.items.map((item) => item.name).join(" + "),
-      ),
-    ).toBeTruthy();
+    expect(ticket().querySelector(".formula-names")).toBeNull();
     expect(
       within(counter()).getByText(customers.biscuit.request(recipe.name)),
     ).toBeTruthy();

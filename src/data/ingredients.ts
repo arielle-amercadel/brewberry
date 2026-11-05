@@ -10,3 +10,8 @@ export const ingredients = {
   cocoa: { name: "Cocoa", sprite: "cocoa" },
   honey: { name: "Honey", sprite: "honey" },
 } satisfies Record<string, Ingredient>;
+
+export type IngredientId = keyof typeof ingredients;
+
+/** Every ingredient id, in prep station order. */
+export const ingredientIds = Object.keys(ingredients) as IngredientId[];
