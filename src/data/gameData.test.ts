@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { sprites } from "../assets/sprites/manifest";
 import { customerIds, customers } from "./customers";
-import { ingredients } from "./ingredients";
-import { createOrder } from "./orders";
+import { ingredientIds, ingredients } from "./ingredients";
+import { createNextOrder, createOrder } from "./orders";
 import { recipeIds, recipes } from "./recipes";
 
 afterEach(() => {
@@ -49,6 +49,15 @@ describe("customers", () => {
       }
     }
   });
+
+  test("thank the player in their own way", () => {
+    expect(customerIds.map((id) => customers[id].thanks)).toEqual([
+      "Yum, thank you!",
+      "Purr-fect!",
+      "Bear-y tasty!",
+      "Ribbit-ing!",
+    ]);
+  });
 });
 
 describe("recipes", () => {
@@ -56,7 +65,7 @@ describe("recipes", () => {
     expect(
       recipeIds.map((id) => [
         recipes[id].name,
-        recipes[id].items.map((item) => item.name),
+        recipes[id].items.map((item) => ingredients[item].name),
       ]),
     ).toEqual([
       ["Strawberry milk", ["Milk", "Strawberry"]],
@@ -68,10 +77,11 @@ describe("recipes", () => {
   });
 
   test("use existing ingredients and drink sprites", () => {
-    const station = Object.values(ingredients);
     for (const id of recipeIds) {
       expect(sprites[recipes[id].sprite]).toBeTruthy();
-      for (const item of recipes[id].items) expect(station).toContain(item);
+      for (const item of recipes[id].items) {
+        expect(ingredientIds).toContain(item);
+      }
     }
   });
 });
@@ -114,5 +124,45 @@ describe("createOrder", () => {
   test("uses Math.random by default", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     expect(createOrder().customerId).toBe("mochi");
+  });
+});
+
+describe("createNextOrder", () => {
+  const previous = (customerId: (typeof customerIds)[number]) => ({
+    customerId,
+    recipeId: recipeIds[0],
+  });
+
+  test("always chooses a different customer, at any random value", () => {
+    for (const customerId of customerIds) {
+      for (const value of [0, 0.25, 0.5, 0.75, 0.999999]) {
+        const next = createNextOrder(previous(customerId), () => value);
+        expect(next.customerId).not.toBe(customerId);
+        expect(customerIds).toContain(next.customerId);
+        expect(recipeIds).toContain(next.recipeId);
+      }
+    }
+  });
+
+  test("can reach all three other customers", () => {
+    const seen = [0, 0.5, 0.999999].map(
+      (value) => createNextOrder(previous("mochi"), () => value).customerId,
+    );
+    expect(seen).toEqual(["biscuit", "maple", "matcha"]);
+  });
+
+  test("may repeat the drink", () => {
+    expect(createNextOrder(previous("mochi"), () => 0).recipeId).toBe(
+      recipeIds[0],
+    );
+  });
+
+  test("never repeats over a long run of real randomness", () => {
+    let order = createOrder();
+    for (let i = 0; i < 500; i++) {
+      const next = createNextOrder(order);
+      expect(next.customerId).not.toBe(order.customerId);
+      order = next;
+    }
   });
 });

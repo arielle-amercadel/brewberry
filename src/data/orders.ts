@@ -14,3 +14,17 @@ export function createOrder(random: () => number = Math.random): Order {
     recipeId: pick(recipeIds, random),
   };
 }
+
+/** The next order always comes from a different customer; the drink may repeat. */
+export function createNextOrder(
+  previous: Order,
+  random: () => number = Math.random,
+): Order {
+  return {
+    customerId: pick(
+      customerIds.filter((id) => id !== previous.customerId),
+      random,
+    ),
+    recipeId: pick(recipeIds, random),
+  };
+}

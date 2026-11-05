@@ -1,18 +1,9 @@
-import { Formula } from "../components/Formula";
+import type { Dispatch } from "react";
+import { PrepStation } from "../components/PrepStation";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
+import type { CafeAction, CafeState } from "../data/cafeGame";
 import { customerIds, customers, type CustomerId } from "../data/customers";
-import { ingredients } from "../data/ingredients";
-import type { Order } from "../data/orders";
 import { recipes } from "../data/recipes";
-
-const station = [
-  ingredients.milk,
-  ingredients.strawberry,
-  ingredients.tea,
-  ingredients.coffee,
-  ingredients.cocoa,
-  ingredients.honey,
-];
 
 function CustomerSprite({
   id,
@@ -32,7 +23,15 @@ function CustomerSprite({
   );
 }
 
-export function CafeView({ order }: { order: Order }) {
+export function CafeView({
+  game,
+  dispatch,
+}: {
+  game: CafeState;
+  dispatch: Dispatch<CafeAction>;
+}) {
+  const { order, orderNumber } = game;
+  const done = game.feedback === "correct";
   const customer = customers[order.customerId];
   const recipe = recipes[order.recipeId];
   // The ordering customer takes the counter; the others fill the same three
@@ -83,7 +82,7 @@ export function CafeView({ order }: { order: Order }) {
             <div className="customer">
               <CustomerSprite id={order.customerId} className="bob" />
               <div className="bubble panel panel-cream">
-                <p>{customer.request(recipe.name)}</p>
+                <p>{done ? customer.thanks : customer.request(recipe.name)}</p>
                 <Sprite name="bubble-tail" className="bubble-tail" />
               </div>
             </div>
@@ -98,51 +97,21 @@ export function CafeView({ order }: { order: Order }) {
         <section className="ticket panel panel-paper" aria-labelledby="ticket">
           <div className="flex items-center justify-between gap-2">
             <h3 id="ticket" className="pixel-heading">
-              Order #01
+              Order #{String(orderNumber).padStart(2, "0")}
             </h3>
-            <span className="preview-tag">Preview</span>
+            {done && <span className="stamp">Served</span>}
           </div>
           <div className="ticket-body">
             <Sprite name={recipe.sprite} />
             <div>
               <p className="text-sm">For {customer.name}</p>
               <p className="ticket-drink">{recipe.name}</p>
-              <Formula items={recipe.items} />
             </div>
           </div>
         </section>
       </div>
 
-      <section className="prep panel panel-wood" aria-labelledby="prep">
-        <h3 id="prep" className="pixel-heading">
-          Prep station
-        </h3>
-        <div className="prep-layout">
-          <ul className="crates">
-            {station.map((item) => (
-              <li key={item.name} className="crate">
-                <span className="crate-stack">
-                  <Sprite name={item.sprite} className="crate-item" />
-                  <Sprite name="crate" className="crate-box" />
-                </span>
-                {item.name}
-              </li>
-            ))}
-          </ul>
-          <div className="brew panel panel-cream">
-            <div className="brew-mat" aria-hidden="true">
-              <Sprite name="slot" pixel={2} />
-              <span className="formula-plus">+</span>
-              <Sprite name="slot" pixel={2} />
-              <Sprite name="empty-mug" />
-            </div>
-            <button type="button" disabled className="brew-button panel">
-              Brew
-              <span className="brew-soon">Soon</span>
-            </button>
-          </div>
-        </div>
-      </section>
+      <PrepStation game={game} dispatch={dispatch} />
     </div>
   );
 }

@@ -7,6 +7,8 @@ export type Customer = {
   blinkSprite: SpriteName;
   /** What the customer says when ordering. Keep it short enough for the bubble. */
   request: (drink: string) => string;
+  /** What the customer says after receiving the right drink. */
+  thanks: string;
 };
 
 export const customers = {
@@ -16,6 +18,7 @@ export const customers = {
     sprite: "mochi",
     blinkSprite: "mochi-blink",
     request: (drink) => `${drink}, please!`,
+    thanks: "Yum, thank you!",
   },
   biscuit: {
     name: "Biscuit",
@@ -23,6 +26,7 @@ export const customers = {
     sprite: "cat",
     blinkSprite: "cat-blink",
     request: (drink) => `${drink}, purr-lease!`,
+    thanks: "Purr-fect!",
   },
   maple: {
     name: "Maple",
@@ -30,6 +34,7 @@ export const customers = {
     sprite: "bear",
     blinkSprite: "bear-blink",
     request: (drink) => `${drink}? Bear-y nice!`,
+    thanks: "Bear-y tasty!",
   },
   matcha: {
     name: "Matcha",
@@ -37,6 +42,7 @@ export const customers = {
     sprite: "frog",
     blinkSprite: "frog-blink",
     request: (drink) => `${drink}? Ribbit!`,
+    thanks: "Ribbit-ing!",
   },
 } satisfies Record<string, Customer>;
 
