@@ -2,6 +2,7 @@ import { useRef, type Dispatch, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import {
   ORDER_REWARD,
+  ORDERS_PER_DAY,
   SLOT_COUNT,
   type CafeAction,
   type CafeState,
@@ -17,7 +18,7 @@ import { recipes } from "../data/recipes";
 import { useRepeatGuard } from "../hooks/useRepeatGuard";
 import { Sprite } from "./Sprite";
 
-function statusMessage({ order, feedback }: CafeState): string {
+function statusMessage({ order, feedback, servedToday }: CafeState): string {
   const customer = customers[order.customerId];
   const drink = recipes[order.recipeId].name;
   switch (feedback) {
@@ -28,7 +29,9 @@ function statusMessage({ order, feedback }: CafeState): string {
     case "wrong":
       return `Hmm, that's not quite ${drink}. Check the Recipe Book and try again!`;
     case "correct":
-      return `${drink} is ready! +${ORDER_REWARD} coins`;
+      return `${drink} is ready! +${ORDER_REWARD} coins${
+        servedToday === ORDERS_PER_DAY ? ". That's everyone for today!" : ""
+      }`;
     case null:
       return `${customer.name} would like ${drink}. Check the Recipe Book for ingredients.`;
   }
@@ -37,12 +40,15 @@ function statusMessage({ order, feedback }: CafeState): string {
 export function PrepStation({
   game,
   dispatch,
+  onFinishDay,
 }: {
   game: CafeState;
   dispatch: Dispatch<CafeAction>;
+  onFinishDay: () => void;
 }) {
   const { order, selected } = game;
   const done = game.feedback === "correct";
+  const lastOfDay = game.servedToday === ORDERS_PER_DAY;
   const customer = customers[order.customerId];
   const recipe = recipes[order.recipeId];
 
@@ -60,6 +66,10 @@ export function PrepStation({
     }
     // A double-press on Brew must not skip straight past the success message.
     if (guard.isRepeat(event, "main")) return;
+    if (lastOfDay) {
+      onFinishDay();
+      return;
+    }
     // The crates are locked until this update lands, and only then can take focus.
     flushSync(() => dispatch({ type: "next", order: createNextOrder(order) }));
     focusCrate(ingredientIds[0]);
@@ -147,7 +157,7 @@ export function PrepStation({
               onClick={onMainButton}
               onKeyDown={guard.onKeyDown}
             >
-              {done ? "Next customer" : "Brew"}
+              {!done ? "Brew" : lastOfDay ? "Finish Day" : "Next customer"}
             </button>
             <button
               type="button"

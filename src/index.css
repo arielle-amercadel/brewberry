@@ -150,15 +150,6 @@ h2[tabindex="-1"]:focus-visible {
     font-size: 1.375rem;
     line-height: 1.1;
   }
-  .preview-tag {
-    flex-shrink: 0;
-    padding: 2px 6px;
-    background: var(--color-cocoa);
-    color: var(--color-cream);
-    font-family: var(--font-pixel);
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-  }
   .sign-text {
     font-family: var(--font-pixel);
     font-size: clamp(1.25rem, 3.4vw, 1.875rem);
@@ -180,10 +171,81 @@ h2[tabindex="-1"]:focus-visible {
     background: var(--color-chocolate);
   }
   .console-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 12px;
     padding-top: var(--px);
     text-align: center;
     font-size: 0.875rem;
     font-weight: 700;
+  }
+  .start-over {
+    min-height: 44px;
+    padding-inline: 8px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .save-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .save-notice p {
+    flex: 1 1 12rem;
+  }
+
+  /* Only one tab plays at a time */
+  .tab-notice {
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+    width: 100%;
+    max-width: 30rem;
+    margin: 12px auto;
+    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+  .tab-notice p[role="status"]:empty {
+    display: none;
+  }
+
+  /* Day Complete */
+  .day-scene {
+    height: calc(96 * var(--px));
+  }
+  .day-receipt {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+  }
+  .day-totals {
+    display: grid;
+    gap: 4px;
+    font-size: 0.875rem;
+  }
+  .day-totals > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 2px dashed var(--color-cream-shadow);
+  }
+  .day-totals dd {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .day-start {
+    justify-self: center;
   }
 
   /* Status bar */
@@ -429,6 +491,10 @@ h2[tabindex="-1"]:focus-visible {
     .scene-wall,
     .scene-customers {
       right: calc(76 * var(--px));
+    }
+    .day-scene .scene-wall,
+    .day-scene .scene-customers {
+      right: 0;
     }
     .ticket {
       position: absolute;

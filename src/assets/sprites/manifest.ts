@@ -27,6 +27,7 @@ import milk from "./milk.png";
 import miniMug from "./mini-mug.png";
 import mochiBlink from "./mochi-blink.png";
 import mochi from "./mochi.png";
+import pipFull from "./pip-full.png";
 import pip from "./pip.png";
 import pottedPlant from "./potted-plant.png";
 import sageRug from "./sage-rug.png";
@@ -75,6 +76,7 @@ export const sprites = {
   "mini-mug": { src: miniMug, width: 16, height: 16 },
   "mochi-blink": { src: mochiBlink, width: 32, height: 32 },
   "mochi": { src: mochi, width: 32, height: 32 },
+  "pip-full": { src: pipFull, width: 8, height: 8 },
   "pip": { src: pip, width: 8, height: 8 },
   "potted-plant": { src: pottedPlant, width: 24, height: 24 },
   "sage-rug": { src: sageRug, width: 32, height: 24 },

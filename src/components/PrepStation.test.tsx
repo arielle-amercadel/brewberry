@@ -15,6 +15,7 @@ function renderRestored(selected: IngredientId[], feedback: CafeState["feedback"
     ...createCafeState({ customerId: "mochi", recipeId: "strawberry-milk" }),
     selected,
     feedback,
+    servedToday: feedback === "correct" ? 1 : 0,
   });
 
   function Restored() {
@@ -22,7 +23,7 @@ function renderRestored(selected: IngredientId[], feedback: CafeState["feedback"
       cafeReducer,
       JSON.parse(saved) as CafeState,
     );
-    return <PrepStation game={game} dispatch={dispatch} />;
+    return <PrepStation game={game} dispatch={dispatch} onFinishDay={() => {}} />;
   }
 
   render(<Restored />);
