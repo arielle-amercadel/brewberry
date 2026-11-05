@@ -46,7 +46,13 @@ async function serveDrink(user: UserEvent) {
 async function serveAndMoveOn(user: UserEvent, times: number) {
   for (let i = 0; i < times; i++) {
     await serveDrink(user);
-    await user.click(button("Next customer"));
+    if (queryButton("Finish Day")) {
+      await user.click(button("Finish Day"));
+      await pause(user);
+      await user.click(button("Start Next Day"));
+    } else {
+      await user.click(button("Next customer"));
+    }
     await pause(user);
   }
 }
@@ -56,13 +62,13 @@ function start() {
   return userEvent.setup();
 }
 
-test("the status bar starts at 30 real coins, outside the Preview group", () => {
+test("the status bar starts at 30 coins, Day 1, and 0/5 orders, with no Preview tag", () => {
   start();
   expect(coins()).toBe(30);
-  const group = screen.getByRole("list", { name: "Preview day and orders" });
+  const group = screen.getByRole("list", { name: "Day and orders" });
   expect(within(group).getByText("Day 1")).toBeTruthy();
-  expect(group.textContent).not.toContain("30");
-  expect(within(screen.getByRole("banner")).getByText("Preview")).toBeTruthy();
+  expect(within(group).getByText("0/5")).toBeTruthy();
+  expect(screen.queryByText("Preview")).toBeNull();
 });
 
 test("a correct drink adds 10 coins once, and the balance shows on every tab", async () => {

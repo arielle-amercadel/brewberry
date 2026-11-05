@@ -212,7 +212,8 @@ describe("completing an order", () => {
       recipeIds.map((id) => recipes[id]).find((r) => r.name === name);
 
     for (let n = 1; n <= 12; n++) {
-      const label = `Order #${String(n).padStart(2, "0")}`;
+      // Order numbers start again each day.
+      const label = `Order #0${((n - 1) % 5) + 1}`;
       expect(screen.getByRole("heading", { name: label })).toBeTruthy();
       const before = counterName();
       const drink = drinkByName(
@@ -220,7 +221,13 @@ describe("completing an order", () => {
       );
       await pickAndBrew(user, ...names(drink!.items));
       await pause(user);
-      await user.click(button("Next customer"));
+      if (n % 5 === 0) {
+        await user.click(button("Finish Day"));
+        await pause(user);
+        await user.click(button("Start Next Day"));
+      } else {
+        await user.click(button("Next customer"));
+      }
       expect(counterName()).not.toBe(before);
     }
   });

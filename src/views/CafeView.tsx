@@ -1,37 +1,22 @@
 import type { Dispatch } from "react";
+import { CustomerSprite } from "../components/CustomerSprite";
 import { PrepStation } from "../components/PrepStation";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
-import type { CafeAction, CafeState } from "../data/cafeGame";
-import { customerIds, customers, type CustomerId } from "../data/customers";
+import { orderNumber, type CafeAction, type CafeState } from "../data/cafeGame";
+import { customerIds, customers } from "../data/customers";
 import { decorations, type DecorationId } from "../data/decorations";
 import { recipes } from "../data/recipes";
-
-function CustomerSprite({
-  id,
-  className,
-}: {
-  id: CustomerId;
-  className: string;
-}) {
-  const customer = customers[id];
-  return (
-    <AnimatedSprite
-      frames={[customer.sprite, customer.blinkSprite]}
-      motion="blink"
-      alt={`${customer.name} the ${customer.species}`}
-      className={className}
-    />
-  );
-}
 
 export function CafeView({
   game,
   dispatch,
+  onFinishDay,
 }: {
   game: CafeState;
   dispatch: Dispatch<CafeAction>;
+  onFinishDay: () => void;
 }) {
-  const { order, orderNumber, equipped } = game;
+  const { order, day, equipped } = game;
   const shows = (id: DecorationId) => equipped.includes(id);
   /** An equipped decoration, sized and placed by its surroundings. */
   const decoration = (id: DecorationId, className = "") =>
@@ -67,7 +52,12 @@ export function CafeView({
             <Sprite name="window" className="hidden sm:block" />
             {decoration("sunny-print")}
             <div className="hanging-sign">
-              <h2 tabIndex={-1} className="sign-text panel panel-wood">
+              <h2
+                tabIndex={-1}
+                // Tells screen reader players which day has begun.
+                aria-label={day > 1 ? `Welcome to the café, Day ${day}` : undefined}
+                className="sign-text panel panel-wood"
+              >
                 Welcome to the café
               </h2>
             </div>
@@ -120,7 +110,7 @@ export function CafeView({
         <section className="ticket panel panel-paper" aria-labelledby="ticket">
           <div className="flex items-center justify-between gap-2">
             <h3 id="ticket" className="pixel-heading">
-              Order #{String(orderNumber).padStart(2, "0")}
+              Order #{String(orderNumber(game)).padStart(2, "0")}
             </h3>
             {done && <span className="stamp">Served</span>}
           </div>
@@ -134,7 +124,7 @@ export function CafeView({
         </section>
       </div>
 
-      <PrepStation game={game} dispatch={dispatch} />
+      <PrepStation game={game} dispatch={dispatch} onFinishDay={onFinishDay} />
     </div>
   );
 }

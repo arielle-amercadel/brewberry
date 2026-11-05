@@ -9,7 +9,6 @@ export function RecipeBookView() {
         <h2 tabIndex={-1} className="sign-text panel panel-berry">
           Your recipe book
         </h2>
-        <span className="preview-tag">Preview</span>
       </div>
       <ul className="recipes">
         {recipeIds.map((id, i) => {

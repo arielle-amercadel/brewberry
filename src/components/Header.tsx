@@ -1,6 +1,15 @@
+import { ORDERS_PER_DAY } from "../data/cafeGame";
 import { Sprite } from "./Sprite";
 
-export function Header({ coins }: { coins: number }) {
+export function Header({
+  coins,
+  day,
+  servedToday,
+}: {
+  coins: number;
+  day: number;
+  servedToday: number;
+}) {
   return (
     <header className="status-bar panel panel-wood">
       <a href="#main-content" className="skip-link">
@@ -16,20 +25,24 @@ export function Header({ coins }: { coins: number }) {
           <strong>{coins}</strong>
           <span className="sr-only">coins</span>
         </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="preview-tag">Preview</span>
-          <ul className="contents" aria-label="Preview day and orders">
-            <li className="stat">Day 1</li>
-            <li className="stat">
-              <span className="hidden gap-[2px] sm:flex" aria-hidden="true">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <Sprite key={i} name="pip" pixel={1} />
-                ))}
-              </span>
-              Orders <strong>0/5</strong>
-            </li>
-          </ul>
-        </div>
+        <ul className="flex flex-wrap items-center gap-2" aria-label="Day and orders">
+          <li className="stat">Day {day}</li>
+          <li className="stat">
+            <span className="hidden gap-[2px] sm:flex" aria-hidden="true">
+              {Array.from({ length: ORDERS_PER_DAY }, (_, i) => (
+                <Sprite
+                  key={i}
+                  name={i < servedToday ? "pip-full" : "pip"}
+                  pixel={1}
+                />
+              ))}
+            </span>
+            Orders{" "}
+            <strong>
+              {servedToday}/{ORDERS_PER_DAY}
+            </strong>
+          </li>
+        </ul>
       </div>
     </header>
   );

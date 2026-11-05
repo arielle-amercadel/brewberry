@@ -8,13 +8,18 @@ export const SLOT_COUNT = 2;
 
 export const STARTING_COINS = 30;
 export const ORDER_REWARD = 10;
+export const ORDERS_PER_DAY = 5;
 
 export type Feedback = "full" | "incomplete" | "wrong" | "correct" | null;
 
 /** Holds only plain ids and values, so it survives a JSON round trip. */
 export type CafeState = {
+  day: number;
+  /** Correct drinks so far today. Coins earned today are this times the reward. */
+  servedToday: number;
+  /** True while the Day Complete screen is showing. */
+  dayComplete: boolean;
   order: Order;
-  orderNumber: number;
   selected: IngredientId[];
   /** The order is complete when this is "correct". */
   feedback: Feedback;
@@ -30,19 +35,29 @@ export type CafeAction =
   | { type: "brew" }
   /** The next order is created by the caller, because reducers must be pure. */
   | { type: "next"; order: Order }
+  | { type: "finishDay" }
+  | { type: "startNextDay"; order: Order }
+  | { type: "startOver"; order: Order }
   | { type: "buy"; decorationId: DecorationId }
   | { type: "toggleEquip"; decorationId: DecorationId };
 
 export function createCafeState(order: Order): CafeState {
   return {
+    day: 1,
+    servedToday: 0,
+    dayComplete: false,
     order,
-    orderNumber: 1,
     selected: [],
     feedback: null,
     coins: STARTING_COINS,
     owned: [],
     equipped: [],
   };
+}
+
+/** The ticket's number, which starts again at 1 each day. */
+export function orderNumber(state: CafeState): number {
+  return state.feedback === "correct" ? state.servedToday : state.servedToday + 1;
 }
 
 /** True when the selection holds exactly the recipe's ingredients, in any order. */
@@ -64,10 +79,12 @@ function brew(state: CafeState): CafeState {
   if (!matchesRecipe(state.selected, recipes[state.order.recipeId])) {
     return { ...state, feedback: "wrong" };
   }
-  // The only place coins are earned. A finished order can't reach here again.
+  // The only place coins are earned. A finished order can't reach here again,
+  // and the reward and the order count are always saved together.
   return {
     ...state,
     feedback: "correct",
+    servedToday: state.servedToday + 1,
     coins: state.coins + ORDER_REWARD,
   };
 }
@@ -110,14 +127,29 @@ export function cafeReducer(state: CafeState, action: CafeAction): CafeState {
     case "brew":
       return done ? state : brew(state);
     case "next":
-      if (!done) return state;
+      if (!done || state.servedToday >= ORDERS_PER_DAY) return state;
       return {
         ...state,
         order: action.order,
-        orderNumber: state.orderNumber + 1,
         selected: [],
         feedback: null,
       };
+    case "finishDay":
+      if (!done || state.servedToday < ORDERS_PER_DAY) return state;
+      return { ...state, dayComplete: true };
+    case "startNextDay":
+      if (!state.dayComplete) return state;
+      return {
+        ...state,
+        day: state.day + 1,
+        servedToday: 0,
+        dayComplete: false,
+        order: action.order,
+        selected: [],
+        feedback: null,
+      };
+    case "startOver":
+      return createCafeState(action.order);
     case "buy": {
       const id = action.decorationId;
       if (purchaseStatus(state, id) !== "available") return state;

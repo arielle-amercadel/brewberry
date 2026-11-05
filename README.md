@@ -4,7 +4,7 @@ A cozy pixel-art café game featuring adorable animal customers and drink-making
 
 Brewberry looks like a retro handheld cooking game: a strawberry-pink console frame around one game screen, with a status bar at the top and three tabs at the bottom. It's built with React, TypeScript, Vite, and Tailwind CSS.
 
-**Current status:** players can take orders, look up recipes, make drinks, earn coins, and buy decorations for the café. Daily limits and saving aren't built yet, so refreshing the page starts over.
+**Current status:** the game is playable from start to finish. Players take orders, look up recipes, make drinks, earn coins, and decorate the café, one in-game day at a time. Progress saves automatically in this browser, with no account or server.
 
 ## Screens
 
@@ -16,7 +16,7 @@ The tabs switch between three working screens.
 | Shop        | A hedgehog shopkeeper and till, and six decorations to buy, then equip or unequip                                                                 | Nothing in the buying flow                                |
 | Recipe Book | The five recipes as numbered, collectible-style drink cards with illustrations and ingredients                                                    | Cards only tilt and shine on hover or keyboard focus      |
 
-The status bar's coin balance is real. Its Day 1 and 0/5 orders are fixed sample values, marked with a "Preview" tag.
+The status bar shows the real coin balance, in-game day, and orders served today.
 
 ## Customers and recipes
 
@@ -37,7 +37,7 @@ The status bar's coin balance is real. Its Day 1 and 0/5 orders are fixed sample
 
 This data lives in `src/data/`, and orders, brewing checks, and the Recipe Book all read from the same recipes. `src/data/orders.ts` creates orders, and always picks a different customer for the next one.
 
-The game rules are a reducer in `src/data/cafeGame.ts`. `App.tsx` holds its state, so the order, selected ingredients, and messages all survive `CafeView` unmounting when the player switches tabs. The state stores customer, recipe, ingredient, and decoration IDs rather than objects, so it survives a JSON round trip for future saving.
+Saving and validation live in `src/data/save.ts`. The game rules are a reducer in `src/data/cafeGame.ts`. `App.tsx` holds its state, so the order, selected ingredients, and messages all survive `CafeView` unmounting when the player switches tabs. The state stores customer, recipe, ingredient, and decoration IDs rather than objects, so it survives a JSON round trip for future saving.
 
 ## Coins and decorations
 
@@ -54,6 +54,18 @@ Players start with 30 coins and earn 10 for each correct drink. Wrong drinks nev
 
 The Shop labels the two decorations that don't fit on narrow screens with "Shows on larger screens". Decorations have fixed spots and add to the original café art, so the café looks complete before any purchases.
 
+## Saving
+
+Progress saves to localStorage after every change, under the `brewberry-save` key. It's a versioned copy of the game state with a revision number, so a refresh returns to the same order, selected ingredients, or Day Complete screen, and can't pay a reward or charge for a purchase twice. Refreshing always opens the Café.
+
+Saved data is validated before loading. If it can't be used, the player sees a short message, a new game starts, and the old data is kept under `brewberry-save-unreadable`. A valid save still loads when the browser won't allow writing. Whenever progress can't be saved, at startup or later, a warning stays on screen and the footer stops saying progress is saved. A new game is saved on its first action, so refreshing an untouched new game may start with a different order.
+
+Only one browser tab plays at a time. The Web Locks API (`src/data/tabLock.ts`) gives one tab the `brewberry-game` lock, and only that tab reads or writes the save, after it has the lock. Other tabs show "Brewberry is open in another tab" instead of the game. When the playing tab closes, the browser hands the lock to a waiting tab, which loads the latest save. **Play here instead** asks the playing tab to pause; it stops saving, then releases the lock, so two tabs never save at once. If the playing tab doesn't answer, for example because it's frozen in the background, the player is asked to close it.
+
+Without Web Locks (very old browsers, or pages served over plain HTTP from a network address), the game runs in every tab. A revision check then stops a tab from overwriting newer progress: it shows "This tab is out of date" with a Reload button instead.
+
+Start over in the footer resets all progress after a confirmation. If the reset can't be saved, the old save is removed so a refresh can't bring it back. If it can't be removed either, nothing is reset and the player is told.
+
 ## How to play
 
 1. Read the order on the ticket. It names the drink but not the ingredients.
@@ -62,9 +74,16 @@ The Shop labels the two decorations that don't fit on narrow screens with "Shows
 4. Select Brew when both slots are full. Ingredient order doesn't matter.
 5. If it's not right, you'll get a friendly message and can try again as many times as you like. There are no timers or penalties.
 6. When it's right, you earn 10 coins, the customer says thanks, and the ticket is stamped "Served". Select Next customer when you're ready, and a different customer places a new order.
-7. Spend coins in the Shop. New decorations appear in the Café straight away, and you can unequip or re-equip them in the Shop for free.
+7. After the fifth order, select Finish Day to see the day's receipt, then Start Next Day when you're ready. Days are in-game only, so there's no real-world waiting.
+8. Spend coins in the Shop. New decorations appear in the Café straight away, and you can unequip or re-equip them in the Shop for free.
 
-## Completed and planned features
+## Completed features
+
+### Completed: Day 5 saving and days
+
+- Automatic saving, with validation and safe handling of unreadable saves.
+- Five orders per in-game day, a Day Complete screen, and unlimited days.
+- Real day and order counts in the status bar, and a Start over option.
 
 ### Completed: Day 4 coins and decorations
 
@@ -96,14 +115,6 @@ The Shop labels the two decorations that don't fit on narrow screens with "Shows
 - Layouts for desktop and phone, with sprites scaled by whole numbers so pixels stay crisp.
 - Blinking, bobbing, steam, and hover animations, which stop when the player's system asks for reduced motion.
 - Keyboard focus styles, a skip-to-content link, and alt text on meaningful art.
-
-### Planned: gameplay
-
-None of these are implemented yet:
-
-- Ten coins per correct order, with no timers or penalties for incorrect orders.
-- Five orders per café day, and day progression.
-- Automatic saving with localStorage.
 
 ## Installation
 
@@ -162,6 +173,11 @@ The tests use Vitest, React Testing Library, user-event, and jsdom:
 - `src/App.brewing.test.tsx` plays through selecting, brewing, retrying, serving, the next customer, and switching screens.
 - `src/App.shop.test.tsx` plays through earning coins, buying, equipping, and keeping progress across screens.
 - `src/App.navigation.test.tsx` checks scroll and focus when switching screens, and repeated key presses on Brew and Buy.
+- `src/App.days.test.tsx` plays through days, Day Complete, refreshing at each stage, unreadable saves, and starting over.
+- `src/App.tabs.test.tsx` checks that one tab plays at a time: startup, handover on close, Play here instead, resets, and startup save failures.
+- `src/App.saving.test.tsx` checks the out-of-date backstop without Web Locks, saving that stops working, and Start over when saving fails.
+- `src/data/tabLock.test.ts` checks the lock handover order with a fake lock manager in `src/test-utils/fakeLocks.ts`.
+- `src/data/save.test.ts` checks save validation, revisions, blocked storage, and corrupted or invalid data.
 - `src/data/gameData.test.ts` checks the customers, the recipes, dialogue length, and order generation.
 - `src/data/cafeGame.test.ts` checks the game rules, rewards, purchases, equipping, recipe matching, and state restored from JSON.
 - `src/components/PrepStation.test.tsx` checks the prep station's buttons and states after restoring from JSON.
@@ -174,6 +190,8 @@ The tests don't check how anything looks, so also review changes in a browser:
 - Play a few orders, including a wrong drink and a Recipe Book visit partway through.
 - Try a whole order using only the keyboard.
 - Buy decorations and check the Café and Shop at phone and desktop widths, with several decorations equipped.
+- Finish a day, refresh on the Day Complete screen, and start the next day.
+- Open Brewberry in two tabs, use Play here instead, then close the playing tab.
 
 ## Structure
 
@@ -188,10 +206,11 @@ src/
   assets/
     fonts/              Pixelify Sans and its license
     sprites/            Generated PNGs and manifest.ts
-  components/           Header, Navigation, PrepStation, Sprite, and Formula
+  components/           Header, Navigation, PrepStation, CustomerSprite, Sprite, Formula
   hooks/                Repeated press guard
-  data/                 Ingredients, recipes, customers, orders, decorations, rules, tests
-  views/                Café, Shop, and Recipe Book screens
+  data/                 Ingredients, recipes, customers, orders, decorations, rules,
+                        saving, and tests
+  views/                Café, Day Complete, Shop, Recipe Book, and tab notice screens
   App.tsx               Console frame, selected screen, and game state
   App.test.tsx          Navigation test
   App.content.test.tsx  Screen content tests
@@ -199,6 +218,11 @@ src/
   App.brewing.test.tsx  Gameplay tests
   App.shop.test.tsx     Coin, shop, and decoration tests
   App.navigation.test.tsx  Screen switching and repeated key press tests
+  App.days.test.tsx     Day progression, refresh, and save tests
+  App.saving.test.tsx   Save failure and backstop tests
+  App.tabs.test.tsx     One-active-tab tests
+  test-utils/           Fake Web Locks for tests
+  test-setup.ts         Clears saved progress between tests
   index.css             Tailwind theme, pixel panels, layouts, and animations
   main.tsx              React entry point
 public/

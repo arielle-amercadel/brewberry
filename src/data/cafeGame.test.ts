@@ -3,6 +3,7 @@ import {
   cafeReducer,
   createCafeState,
   matchesRecipe,
+  orderNumber,
   ORDER_REWARD,
   purchaseStatus,
   STARTING_COINS,
@@ -129,7 +130,7 @@ describe("brewing", () => {
     for (let i = 0; i < 100; i++) state = cafeReducer(state, brew);
     expect(state.feedback).toBe("wrong");
     expect(state.order).toEqual(order);
-    expect(state.orderNumber).toBe(1);
+    expect(orderNumber(state)).toBe(1);
     expect(
       run([toggle(coffee), toggle(strawberry), brew], state).feedback,
     ).toBe("correct");
@@ -149,7 +150,6 @@ describe("completing an order", () => {
     expect(cafeReducer(served, { type: "next", order: nextOrder })).toEqual({
       ...served,
       order: nextOrder,
-      orderNumber: 2,
       selected: [],
       feedback: null,
     });
@@ -210,7 +210,7 @@ describe("after a JSON round trip", () => {
     const restored = restore(run([toggle(milk), toggle(strawberry), brew]));
     expect(cafeReducer(restored, toggle(tea))).toBe(restored);
     expect(
-      cafeReducer(restored, { type: "next", order: nextOrder }).orderNumber,
+      orderNumber(cafeReducer(restored, { type: "next", order: nextOrder })),
     ).toBe(2);
   });
 });
@@ -278,12 +278,13 @@ describe("earning coins", () => {
 
   test("every order pays once", () => {
     let state = createCafeState(order);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
       state = run(serve, state);
       state = cafeReducer(state, { type: "next", order });
     }
+    state = run(serve, state);
     expect(state.coins).toBe(80);
-    expect(state.orderNumber).toBe(6);
+    expect(state.servedToday).toBe(5);
   });
 
   test("the reducer gives the same result when run twice, as StrictMode does", () => {
@@ -410,3 +411,107 @@ describe("the economy after a JSON round trip", () => {
     expect(cafeReducer(restored, brew).coins).toBe(40);
   });
 });
+
+describe("in-game days", () => {
+  const moveOn: CafeAction = { type: "next", order: nextOrder };
+  const finishDay: CafeAction = { type: "finishDay" };
+  const nextDay: CafeAction = { type: "startNextDay", order: nextOrder };
+  /** Five correct drinks of the same order, ending on the fifth success screen. */
+  const fiveServed = () => {
+    let state = createCafeState(order);
+    // moveOn brings a different drink, so go back to the test's own order.
+    for (let i = 0; i < 4; i++) {
+      state = run([...serve, moveOn], { ...state, order });
+    }
+    return run(serve, { ...state, order });
+  };
+
+  test("players begin on Day 1 with no orders served", () => {
+    const state = createCafeState(order);
+    expect(state.day).toBe(1);
+    expect(state.servedToday).toBe(0);
+    expect(state.dayComplete).toBe(false);
+    expect(orderNumber(state)).toBe(1);
+  });
+
+  test("only correct drinks count as served", () => {
+    expect(run([toggle(milk), brew]).servedToday).toBe(0);
+    expect(run([toggle(milk), toggle(coffee), brew]).servedToday).toBe(0);
+    expect(run(serve).servedToday).toBe(1);
+  });
+
+  test("brewing a finished drink again doesn't count twice", () => {
+    expect(cafeReducer(run(serve), brew).servedToday).toBe(1);
+  });
+
+  test("the order number follows the day's progress", () => {
+    const served = run(serve);
+    expect(orderNumber(served)).toBe(1);
+    expect(orderNumber(cafeReducer(served, moveOn))).toBe(2);
+  });
+
+  test("the fifth drink can't move on to a sixth customer", () => {
+    const state = fiveServed();
+    expect(state.servedToday).toBe(5);
+    expect(cafeReducer(state, moveOn)).toBe(state);
+  });
+
+  test("the day can only finish after the fifth drink", () => {
+    const early = run(serve);
+    expect(cafeReducer(early, finishDay)).toBe(early);
+    const fifthNotBrewed = { ...fiveServed(), feedback: null };
+    expect(cafeReducer(fifthNotBrewed, finishDay)).toBe(fifthNotBrewed);
+    expect(cafeReducer(fiveServed(), finishDay).dayComplete).toBe(true);
+  });
+
+  test("the next day can only start from Day Complete", () => {
+    const state = fiveServed();
+    expect(cafeReducer(state, nextDay)).toBe(state);
+  });
+
+  test("the next day resets the count and carries everything else over", () => {
+    const spent = cafeReducer(fiveServed(), buy("bunting"));
+    const stored = cafeReducer(spent, toggleEquip("bunting"));
+    const next = cafeReducer(cafeReducer(stored, buy("cozy-cushion")), finishDay);
+    const state = cafeReducer(next, nextDay);
+    expect(state.day).toBe(2);
+    expect(state.servedToday).toBe(0);
+    expect(state.dayComplete).toBe(false);
+    expect(state.feedback).toBeNull();
+    expect(state.selected).toEqual([]);
+    expect(state.order).toEqual(nextOrder);
+    expect(state.coins).toBe(next.coins);
+    expect(state.owned).toEqual(["bunting", "cozy-cushion"]);
+    expect(state.equipped).toEqual(["cozy-cushion"]);
+    expect(orderNumber(state)).toBe(1);
+  });
+
+  test("starting the next day twice only advances once", () => {
+    const once = cafeReducer(cafeReducer(fiveServed(), finishDay), nextDay);
+    expect(cafeReducer(once, nextDay)).toBe(once);
+  });
+
+  test("days can keep going", () => {
+    let state = createCafeState(order);
+    for (let day = 0; day < 20; day++) {
+      for (let i = 0; i < 4; i++) state = run([...serve, moveOn], { ...state, order });
+      state = run([...serve, finishDay, nextDay], { ...state, order });
+    }
+    expect(state.day).toBe(21);
+    expect(state.coins).toBe(30 + 20 * 50);
+  });
+
+  test("shopping still works during Day Complete", () => {
+    const state = cafeReducer(cafeReducer(fiveServed(), finishDay), buy("bunting"));
+    expect(state.owned).toEqual(["bunting"]);
+    expect(state.dayComplete).toBe(true);
+  });
+
+  test("starting over resets everything", () => {
+    const played = run([buy("bunting"), ...serve]);
+    expect(cafeReducer(played, { type: "startOver", order: nextOrder })).toEqual(
+      createCafeState(nextOrder),
+    );
+  });
+});
+
