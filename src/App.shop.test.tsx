@@ -95,6 +95,14 @@ test("double-clicking Brew pays only once", async () => {
   expect(coins()).toBe(40);
 });
 
+test("a correct drink tells screen reader players the new balance", async () => {
+  const user = start();
+  await serveDrink(user);
+  const balance = screen.getByText("You now have 40 coins.", { exact: false });
+  expect(balance.className).toBe("sr-only");
+  expect(screen.getByRole("status").contains(balance)).toBe(true);
+});
+
 test("wrong and incomplete drinks never change coins", async () => {
   vi.spyOn(Math, "random").mockReturnValue(0);
   const user = start();
@@ -121,7 +129,18 @@ test("buying deducts the price, stamps Owned, and thanks the player", async () =
   expect(within(tag("Berry bunting")).getByText("Owned")).toBeTruthy();
   expect(queryButton("Buy Berry bunting")).toBeNull();
   expect(button("Unequip Berry bunting")).toBeTruthy();
-  expect(speech()).toBe("Thanks! Enjoy your Berry bunting.");
+  // The new balance is read out with the thanks, and only screen readers get it.
+  expect(speech()).toBe("Thanks! Enjoy your Berry bunting. You have 15 coins left.");
+  expect(screen.getByText("You have 15 coins left.", { exact: false }).className).toBe("sr-only");
+});
+
+test("equipping and unequipping don't repeat the balance", async () => {
+  const user = start();
+  await go(user, "Shop");
+  await user.click(button("Buy Berry bunting"));
+  await new Promise((resolve) => setTimeout(resolve, 550));
+  await user.click(button("Unequip Berry bunting"));
+  expect(speech()).toBe("Berry bunting is put away.");
 });
 
 test("buying keeps the button in view after the message changes", async () => {
@@ -143,17 +162,35 @@ test("buying keeps the button in view after the message changes", async () => {
   }
 });
 
+test("a button players can't afford is described by how much is missing", async () => {
+  const user = start();
+  await go(user, "Shop");
+  const lamp = button("Buy Café lamp");
+  const note = within(tag("Café lamp")).getByText("Need 10 more coins");
+  expect(lamp.getAttribute("aria-describedby")).toBe(note.id);
+  expect(document.getElementById(lamp.getAttribute("aria-describedby")!)).toBe(note);
+  // Affordable items have nothing extra to say.
+  expect(button("Buy Berry bunting").hasAttribute("aria-describedby")).toBe(false);
+
+  // Earning enough removes the note and the description together.
+  await go(user, "Café");
+  await serveDrink(user);
+  await go(user, "Shop");
+  expect(button("Buy Café lamp").hasAttribute("aria-describedby")).toBe(false);
+  expect(within(tag("Café lamp")).queryByText(/^Need/)).toBeNull();
+});
+
 test("items players can't afford are disabled and say how much is missing", async () => {
   const user = start();
   await go(user, "Shop");
   expect(isDisabled("Buy Café lamp")).toBe(true);
-  expect(within(tag("Café lamp")).getByText("Need 10 more")).toBeTruthy();
+  expect(within(tag("Café lamp")).getByText("Need 10 more coins")).toBeTruthy();
   expect(isDisabled("Buy Sage checkered rug")).toBe(false);
 
   await user.click(button("Buy Sage checkered rug"));
   expect(coins()).toBe(0);
   expect(isDisabled("Buy Berry bunting")).toBe(true);
-  expect(within(tag("Berry bunting")).getByText("Need 15 more")).toBeTruthy();
+  expect(within(tag("Berry bunting")).getByText("Need 15 more coins")).toBeTruthy();
 });
 
 test("earning enough unlocks an item that was too expensive", async () => {

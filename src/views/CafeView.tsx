@@ -1,10 +1,10 @@
 import type { Dispatch } from "react";
 import { CustomerSprite } from "../components/CustomerSprite";
 import { PrepStation } from "../components/PrepStation";
+import { SceneDecoration } from "../components/SceneDecoration";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
 import { orderNumber, type CafeAction, type CafeState } from "../data/cafeGame";
 import { customerIds, customers } from "../data/customers";
-import { decorations, type DecorationId } from "../data/decorations";
 import { recipes } from "../data/recipes";
 
 export function CafeView({
@@ -17,16 +17,6 @@ export function CafeView({
   onFinishDay: () => void;
 }) {
   const { order, day, equipped } = game;
-  const shows = (id: DecorationId) => equipped.includes(id);
-  /** An equipped decoration, sized and placed by its surroundings. */
-  const decoration = (id: DecorationId, className = "") =>
-    shows(id) && (
-      <Sprite
-        name={decorations[id].sprite}
-        alt={decorations[id].name}
-        className={className}
-      />
-    );
   const done = game.feedback === "correct";
   const customer = customers[order.customerId];
   const recipe = recipes[order.recipeId];
@@ -41,16 +31,10 @@ export function CafeView({
       <div className="relative">
         <section className="scene" aria-label="Café counter">
           <div className="tile-awning scene-awning" />
-          {shows("bunting") && (
-            <div
-              role="img"
-              aria-label={decorations.bunting.name}
-              className="scene-bunting"
-            />
-          )}
+          <SceneDecoration id="bunting" equipped={equipped} />
           <div className="scene-wall">
             <Sprite name="window" className="hidden sm:block" />
-            {decoration("sunny-print")}
+            <SceneDecoration id="sunny-print" equipped={equipped} />
             <div className="hanging-sign">
               <h2
                 tabIndex={-1}
@@ -88,7 +72,7 @@ export function CafeView({
               <CustomerSprite id={secondSeat} className="seat-guest anim-late" />
               <Sprite name="cafe-table" className="seat-table" />
             </div>
-            {decoration("cafe-lamp")}
+            <SceneDecoration id="cafe-lamp" equipped={equipped} />
             <div className="customer">
               <CustomerSprite id={order.customerId} className="bob" />
               <div className="bubble panel panel-cream">
@@ -97,14 +81,22 @@ export function CafeView({
               </div>
             </div>
             <CustomerSprite id={standing} className="anim-later self-end" />
-            {decoration("cozy-cushion", "hidden min-[360px]:block")}
-            {decoration("strawberry-planter", "hidden md:block")}
+            <SceneDecoration
+              id="cozy-cushion"
+              equipped={equipped}
+              className="hidden min-[360px]:block"
+            />
+            <SceneDecoration
+              id="strawberry-planter"
+              equipped={equipped}
+              className="hidden md:block"
+            />
           </div>
           <div className="scene-counter">
             <div className="tile-counter-top" />
             <div className="tile-counter-front" />
           </div>
-          {decoration("sage-rug", "scene-rug")}
+          <SceneDecoration id="sage-rug" equipped={equipped} className="scene-rug" />
         </section>
 
         <section className="ticket panel panel-paper" aria-labelledby="ticket">

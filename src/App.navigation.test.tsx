@@ -7,7 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import App from "./App";
 
 afterEach(() => {
@@ -110,6 +110,65 @@ describe("switching screens", () => {
     await user.click(button("Shop"));
     expect(button("Shop").getAttribute("aria-current")).toBe("page");
     expect(heading("The cozy shop").tabIndex).toBe(-1);
+  });
+});
+
+describe("coming back from the Recipe Book", () => {
+  const prep = () => screen.getByRole("heading", { name: "Prep station", level: 3 });
+  const scrolled = vi.fn();
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = scrolled;
+  });
+  afterEach(() => {
+    scrolled.mockReset();
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+
+  test("mid-order lands on the Prep station, with the selection kept", async () => {
+    const user = start();
+    await user.click(button("Milk"));
+    await user.click(button("Recipe Book"));
+    await user.click(button("Café"));
+    expect(document.activeElement).toBe(prep());
+    expect(scrolled.mock.contexts.at(-1)).toBe(prep());
+    expect(scrolled).toHaveBeenLastCalledWith({ block: "start" });
+    expect(button("Milk").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("by keyboard, the next Tab press reaches the first ingredient", async () => {
+    const user = start();
+    button("Recipe Book").focus();
+    await user.keyboard("{Enter}");
+    button("Café").focus();
+    await user.keyboard("{Enter}");
+    expect(document.activeElement).toBe(prep());
+    await user.tab();
+    expect(document.activeElement).toBe(button("Milk"));
+  });
+
+  test("the Prep station heading is announced but isn't a tab stop", () => {
+    start();
+    expect(prep().tabIndex).toBe(-1);
+  });
+
+  test("after serving, the Café opens at the top so the thank-you is seen", async () => {
+    const user = start();
+    await user.click(button("Milk"));
+    await user.click(button("Strawberry"));
+    await user.pointer({ target: document.body });
+    await user.click(button("Brew"));
+    await user.click(button("Recipe Book"));
+    await user.click(button("Café"));
+    expect(document.activeElement).toBe(heading("Welcome to the café"));
+    expect(scrolled).not.toHaveBeenCalledWith({ block: "start" });
+  });
+
+  test("from the Shop, the Café still opens at the top", async () => {
+    const user = start();
+    await user.click(button("Shop"));
+    await user.click(button("Café"));
+    expect(document.activeElement).toBe(heading("Welcome to the café"));
+    expect(scrolled).not.toHaveBeenCalledWith({ block: "start" });
   });
 });
 
