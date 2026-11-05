@@ -14,6 +14,7 @@ import {
 } from "../data/ingredients";
 import { createNextOrder } from "../data/orders";
 import { recipes } from "../data/recipes";
+import { useRepeatGuard } from "../hooks/useRepeatGuard";
 import { Sprite } from "./Sprite";
 
 function statusMessage({ order, feedback }: CafeState): string {
@@ -49,13 +50,16 @@ export function PrepStation({
   const crateButtons = useRef(new Map<IngredientId, HTMLButtonElement>());
   const focusCrate = (id: IngredientId) => crateButtons.current.get(id)?.focus();
 
+  const guard = useRepeatGuard();
+
   const onMainButton = (event: MouseEvent) => {
     if (!done) {
+      guard.hold(event, "main");
       dispatch({ type: "brew" });
       return;
     }
-    // A double-click on Brew must not skip straight past the success message.
-    if (event.detail > 1) return;
+    // A double-press on Brew must not skip straight past the success message.
+    if (guard.isRepeat(event, "main")) return;
     // The crates are locked until this update lands, and only then can take focus.
     flushSync(() => dispatch({ type: "next", order: createNextOrder(order) }));
     focusCrate(ingredientIds[0]);
@@ -141,6 +145,7 @@ export function PrepStation({
               disabled={!done && selected.length === 0}
               className="brew-button panel"
               onClick={onMainButton}
+              onKeyDown={guard.onKeyDown}
             >
               {done ? "Next customer" : "Brew"}
             </button>

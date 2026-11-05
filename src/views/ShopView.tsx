@@ -1,4 +1,5 @@
 import { useState, type Dispatch, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
 import {
   purchaseStatus,
@@ -10,6 +11,7 @@ import {
   decorations,
   type DecorationId,
 } from "../data/decorations";
+import { useRepeatGuard } from "../hooks/useRepeatGuard";
 
 const GREETING = "Welcome! Serve drinks to earn coins.";
 
@@ -29,23 +31,30 @@ export function ShopView({
   const [speech, setSpeech] = useState(GREETING);
   const [speechAbout, setSpeechAbout] = useState<DecorationId | null>(null);
   const speechNote = speechAbout && hideNoteFrom[speechAbout];
+  const guard = useRepeatGuard();
 
   const onItemButton = (event: MouseEvent, id: DecorationId) => {
-    // A double-click on Buy must not immediately take the new item back down.
-    if (event.detail > 1) return;
+    // A double-press on Buy must not immediately take the new item back down.
+    if (guard.isRepeat(event, id)) return;
     const { name } = decorations[id];
-    setSpeechAbout(id);
-    if (!game.owned.includes(id)) {
-      dispatch({ type: "buy", decorationId: id });
-      setSpeech(`Thanks! Enjoy your ${name}.`);
-      return;
-    }
-    dispatch({ type: "toggleEquip", decorationId: id });
-    setSpeech(
-      game.equipped.includes(id)
-        ? `${name} is put away.`
-        : `${name} is out in the café.`,
-    );
+    const button = event.currentTarget;
+    flushSync(() => {
+      setSpeechAbout(id);
+      if (!game.owned.includes(id)) {
+        guard.hold(event, id);
+        dispatch({ type: "buy", decorationId: id });
+        setSpeech(`Thanks! Enjoy your ${name}.`);
+        return;
+      }
+      dispatch({ type: "toggleEquip", decorationId: id });
+      setSpeech(
+        game.equipped.includes(id)
+          ? `${name} is put away.`
+          : `${name} is out in the café.`,
+      );
+    });
+    // A longer message can push this button down, and Safari won't follow it.
+    button.scrollIntoView?.({ block: "nearest" });
   };
 
   return (
@@ -53,7 +62,9 @@ export function ShopView({
       <div className="tile-awning scene-awning" />
       <div className="shop-hero">
         <div className="hanging-sign">
-          <h2 className="sign-text panel panel-wood">The cozy shop</h2>
+          <h2 tabIndex={-1} className="sign-text panel panel-wood">
+            The cozy shop
+          </h2>
         </div>
         <div className="keeper">
           <div className="bubble-side panel panel-cream">
@@ -113,6 +124,7 @@ export function ShopView({
                     disabled={status === "short"}
                     className={`shelf-button panel ${status === "owned" ? "" : "shelf-button-buy"}`}
                     onClick={(event) => onItemButton(event, id)}
+                    onKeyDown={guard.onKeyDown}
                   >
                     {action}
                   </button>

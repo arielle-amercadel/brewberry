@@ -6,7 +6,9 @@ export function RecipeBookView() {
   return (
     <div className="book panel panel-pink">
       <div className="book-head">
-        <h2 className="sign-text panel panel-berry">Your recipe book</h2>
+        <h2 tabIndex={-1} className="sign-text panel panel-berry">
+          Your recipe book
+        </h2>
         <span className="preview-tag">Preview</span>
       </div>
       <ul className="recipes">

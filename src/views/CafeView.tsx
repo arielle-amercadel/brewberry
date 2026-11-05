@@ -67,7 +67,7 @@ export function CafeView({
             <Sprite name="window" className="hidden sm:block" />
             {decoration("sunny-print")}
             <div className="hanging-sign">
-              <h2 className="sign-text panel panel-wood">
+              <h2 tabIndex={-1} className="sign-text panel panel-wood">
                 Welcome to the café
               </h2>
             </div>
