@@ -28,7 +28,7 @@ test("Café shows Mochi, the order ticket, all ingredients, and a disabled Brew"
   expect((brew as HTMLButtonElement).disabled).toBe(true);
 });
 
-test("Shop lists every decoration with a preview price and no buy button", async () => {
+test("Shop lists every decoration with a price and a Buy button", async () => {
   const user = userEvent.setup();
   render(<App />);
   await user.click(screen.getByRole("button", { name: "Shop" }));
@@ -41,8 +41,9 @@ test("Shop lists every decoration with a preview price and no buy button", async
     "Berry bunting",
     "Cozy cushion",
   ]);
-  expect(screen.getAllByText("coins, preview price")).toHaveLength(6);
-  expect(screen.getAllByRole("button")).toHaveLength(3);
+  for (const name of headingNames()) {
+    expect(screen.getByRole("button", { name: `Buy ${name}` })).toBeTruthy();
+  }
 });
 
 test("Recipe Book shows all five drinks with their ingredients", async () => {

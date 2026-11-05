@@ -3,6 +3,7 @@ import { PrepStation } from "../components/PrepStation";
 import { AnimatedSprite, Sprite } from "../components/Sprite";
 import type { CafeAction, CafeState } from "../data/cafeGame";
 import { customerIds, customers, type CustomerId } from "../data/customers";
+import { decorations, type DecorationId } from "../data/decorations";
 import { recipes } from "../data/recipes";
 
 function CustomerSprite({
@@ -30,7 +31,17 @@ export function CafeView({
   game: CafeState;
   dispatch: Dispatch<CafeAction>;
 }) {
-  const { order, orderNumber } = game;
+  const { order, orderNumber, equipped } = game;
+  const shows = (id: DecorationId) => equipped.includes(id);
+  /** An equipped decoration, sized and placed by its surroundings. */
+  const decoration = (id: DecorationId, className = "") =>
+    shows(id) && (
+      <Sprite
+        name={decorations[id].sprite}
+        alt={decorations[id].name}
+        className={className}
+      />
+    );
   const done = game.feedback === "correct";
   const customer = customers[order.customerId];
   const recipe = recipes[order.recipeId];
@@ -45,8 +56,16 @@ export function CafeView({
       <div className="relative">
         <section className="scene" aria-label="Café counter">
           <div className="tile-awning scene-awning" />
+          {shows("bunting") && (
+            <div
+              role="img"
+              aria-label={decorations.bunting.name}
+              className="scene-bunting"
+            />
+          )}
           <div className="scene-wall">
             <Sprite name="window" className="hidden sm:block" />
+            {decoration("sunny-print")}
             <div className="hanging-sign">
               <h2 className="sign-text panel panel-wood">
                 Welcome to the café
@@ -79,6 +98,7 @@ export function CafeView({
               <CustomerSprite id={secondSeat} className="seat-guest anim-late" />
               <Sprite name="cafe-table" className="seat-table" />
             </div>
+            {decoration("cafe-lamp")}
             <div className="customer">
               <CustomerSprite id={order.customerId} className="bob" />
               <div className="bubble panel panel-cream">
@@ -87,11 +107,14 @@ export function CafeView({
               </div>
             </div>
             <CustomerSprite id={standing} className="anim-later self-end" />
+            {decoration("cozy-cushion", "hidden min-[360px]:block")}
+            {decoration("strawberry-planter", "hidden md:block")}
           </div>
           <div className="scene-counter">
             <div className="tile-counter-top" />
             <div className="tile-counter-front" />
           </div>
+          {decoration("sage-rug", "scene-rug")}
         </section>
 
         <section className="ticket panel panel-paper" aria-labelledby="ticket">

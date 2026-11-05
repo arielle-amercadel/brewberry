@@ -4,7 +4,7 @@ A cozy pixel-art café game featuring adorable animal customers and drink-making
 
 Brewberry looks like a retro handheld cooking game: a strawberry-pink console frame around one game screen, with a status bar at the top and three tabs at the bottom. It's built with React, TypeScript, Vite, and Tailwind CSS.
 
-**Current status:** players can take orders, look up recipes, make drinks, and move on to the next customer. Coins, shop purchases, daily limits, and saving aren't built yet, so refreshing the page starts over.
+**Current status:** players can take orders, look up recipes, make drinks, earn coins, and buy decorations for the café. Daily limits and saving aren't built yet, so refreshing the page starts over.
 
 ## Screens
 
@@ -13,10 +13,10 @@ The tabs switch between three working screens.
 | Screen      | What it does                                                                                                                                      | What is placeholder                                       |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | Café        | A customer orders a drink at the counter with the other three nearby. Players pick ingredients from six crates, brew, and serve the next customer | Nothing in the order flow                                 |
-| Shop        | A hedgehog shopkeeper and till, and six decorations on shelves with coin prices and "Soon" stamps                                                 | Prices are sample values and nothing can be bought        |
+| Shop        | A hedgehog shopkeeper and till, and six decorations to buy, then equip or unequip                                                                 | Nothing in the buying flow                                |
 | Recipe Book | The five recipes as numbered, collectible-style drink cards with illustrations and ingredients                                                    | Cards only tilt and shine on hover or keyboard focus      |
 
-The status bar's 30 coins, Day 1, and 0/5 orders are fixed sample values, marked with a "Preview" tag.
+The status bar's coin balance is real. Its Day 1 and 0/5 orders are fixed sample values, marked with a "Preview" tag.
 
 ## Customers and recipes
 
@@ -37,7 +37,22 @@ The status bar's 30 coins, Day 1, and 0/5 orders are fixed sample values, marked
 
 This data lives in `src/data/`, and orders, brewing checks, and the Recipe Book all read from the same recipes. `src/data/orders.ts` creates orders, and always picks a different customer for the next one.
 
-The game rules are a reducer in `src/data/cafeGame.ts`. `App.tsx` holds its state, so the order, selected ingredients, and messages all survive `CafeView` unmounting when the player switches tabs. The state stores customer, recipe, and ingredient IDs rather than objects, so it survives a JSON round trip for future saving.
+The game rules are a reducer in `src/data/cafeGame.ts`. `App.tsx` holds its state, so the order, selected ingredients, and messages all survive `CafeView` unmounting when the player switches tabs. The state stores customer, recipe, ingredient, and decoration IDs rather than objects, so it survives a JSON round trip for future saving.
+
+## Coins and decorations
+
+Players start with 30 coins and earn 10 for each correct drink. Wrong drinks never cost anything, and owning everything takes 12 orders.
+
+| Decoration         | Price | Where it appears in the Café           | Visible from |
+| ------------------ | ----- | -------------------------------------- | ------------ |
+| Berry bunting      | 15    | Across the wall under the awning       | All widths   |
+| Strawberry planter | 20    | Customer row, at the right             | 768px        |
+| Cozy cushion       | 20    | Customer row, at the right             | 360px        |
+| Sunny wall print   | 25    | On the wall, beside the sign           | All widths   |
+| Sage checkered rug | 30    | Runner on the front of the counter     | All widths   |
+| Café lamp          | 40    | Customer row, before the counter spot  | All widths   |
+
+The Shop labels the two decorations that don't fit on narrow screens with "Shows on larger screens". Decorations have fixed spots and add to the original café art, so the café looks complete before any purchases.
 
 ## How to play
 
@@ -46,9 +61,16 @@ The game rules are a reducer in `src/data/cafeGame.ts`. `App.tsx` holds its stat
 3. Select an ingredient crate to move it onto the mat. Select it again, select its slot, or use Clear to take it back.
 4. Select Brew when both slots are full. Ingredient order doesn't matter.
 5. If it's not right, you'll get a friendly message and can try again as many times as you like. There are no timers or penalties.
-6. When it's right, the customer says thanks and the ticket is stamped "Served". Select Next customer when you're ready, and a different customer places a new order.
+6. When it's right, you earn 10 coins, the customer says thanks, and the ticket is stamped "Served". Select Next customer when you're ready, and a different customer places a new order.
+7. Spend coins in the Shop. New decorations appear in the Café straight away, and you can unequip or re-equip them in the Shop for free.
 
 ## Completed and planned features
+
+### Completed: Day 4 coins and decorations
+
+- A real coin balance, with 10 coins paid exactly once per correct drink.
+- Buying the six decorations, with no duplicates and no overspending.
+- Owned items, equipping, and unequipping, with each decoration in a fixed Café spot.
 
 ### Completed: Day 3 making drinks
 
@@ -81,7 +103,6 @@ None of these are implemented yet:
 
 - Ten coins per correct order, with no timers or penalties for incorrect orders.
 - Five orders per café day, and day progression.
-- Buying cosmetic decorations and placing them in the café.
 - Automatic saving with localStorage.
 
 ## Installation
@@ -139,8 +160,9 @@ The tests use Vitest, React Testing Library, user-event, and jsdom:
 - `src/App.content.test.tsx` checks that each screen shows its expected content, that Brew is disabled, and that the Shop has no buy buttons.
 - `src/App.orders.test.tsx` checks that every customer and drink displays correctly, and that the order stays the same while switching screens.
 - `src/App.brewing.test.tsx` plays through selecting, brewing, retrying, serving, the next customer, and switching screens.
+- `src/App.shop.test.tsx` plays through earning coins, buying, equipping, and keeping progress across screens.
 - `src/data/gameData.test.ts` checks the customers, the recipes, dialogue length, and order generation.
-- `src/data/cafeGame.test.ts` checks the game rules, recipe matching, and state restored from JSON.
+- `src/data/cafeGame.test.ts` checks the game rules, rewards, purchases, equipping, recipe matching, and state restored from JSON.
 - `src/components/PrepStation.test.tsx` checks the prep station's buttons and states after restoring from JSON.
 
 The tests don't check how anything looks, so also review changes in a browser:
@@ -150,6 +172,7 @@ The tests don't check how anything looks, so also review changes in a browser:
 - Turn on your system's reduced-motion setting and confirm the animations stop.
 - Play a few orders, including a wrong drink and a Recipe Book visit partway through.
 - Try a whole order using only the keyboard.
+- Buy decorations and check the Café and Shop at phone and desktop widths, with several decorations equipped.
 
 ## Structure
 
@@ -165,13 +188,14 @@ src/
     fonts/              Pixelify Sans and its license
     sprites/            Generated PNGs and manifest.ts
   components/           Header, Navigation, PrepStation, Sprite, and Formula
-  data/                 Ingredients, recipes, customers, orders, game rules, and tests
+  data/                 Ingredients, recipes, customers, orders, decorations, rules, tests
   views/                Café, Shop, and Recipe Book screens
   App.tsx               Console frame, selected screen, and game state
   App.test.tsx          Navigation test
   App.content.test.tsx  Screen content tests
   App.orders.test.tsx   Order display and stability tests
   App.brewing.test.tsx  Gameplay tests
+  App.shop.test.tsx     Coin, shop, and decoration tests
   index.css             Tailwind theme, pixel panels, layouts, and animations
   main.tsx              React entry point
 public/
