@@ -196,6 +196,37 @@ describe("one active tab", () => {
   });
 });
 
+describe("page headings", () => {
+  const mainHeadings = (t: Tab) => t.tab.queryAllByRole("heading", { level: 1 });
+
+  test("every screen has exactly one main heading, playing or not", async () => {
+    const user = userEvent.setup();
+    const a = openTab();
+    await untilPlaying(a);
+    expect(mainHeadings(a).map((h) => h.textContent)).toEqual(["Brewberry"]);
+
+    const b = openTab();
+    await untilNotice(b, WAITING);
+    expect(mainHeadings(b).map((h) => h.textContent)).toEqual(["Brewberry"]);
+
+    await user.click(b.button("Play here instead"));
+    await untilPlaying(b);
+    await untilNotice(a, HANDED_OFF);
+    expect(mainHeadings(a).map((h) => h.textContent)).toEqual(["Brewberry"]);
+    expect(mainHeadings(b).map((h) => h.textContent)).toEqual(["Brewberry"]);
+  });
+
+  test("the notice's own heading still takes focus, below the main heading", async () => {
+    locks.failRequests("brewberry-game");
+    const a = openTab();
+    await untilNotice(a, "Brewberry couldn't open your café");
+    expect(document.activeElement).toBe(
+      a.tab.getByRole("heading", { level: 2, name: "Brewberry couldn't open your café" }),
+    );
+    expect(mainHeadings(a)).toHaveLength(1);
+  });
+});
+
 describe("when the browser's tab locks fail", () => {
   const FAILED = "Brewberry couldn't open your café";
 

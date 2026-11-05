@@ -298,6 +298,9 @@ export default function App() {
           tabIndex={-1}
           className="screen-main"
         >
+          {/* The header holds the page's main heading. Notice screens hide it,
+              so screen readers still get one there. */}
+          {!playing && <h1 className="sr-only">Brewberry</h1>}
           {!playing && (
             <TabNotice
               state={tab === "active" ? "checking" : tab}
